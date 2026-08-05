@@ -1,0 +1,24 @@
+SYNTHETIC TEST FIXTURE - NOT FOR CLINICAL USE
+Persona: 05_adult_comorbid_and_conflicting
+Title: Synthetic adult interview with comorbidity
+Reporter: patient
+Setting: clinical
+Source type: transcript
+
+TRANSCRIPT
+CLINICIAN: Describe the current concern.
+AP: I can produce good work, but only through panic, all-night catch-up, many alarms, and rewriting lists. I drift in readings, miss details, underestimate time, and interrupt in seminars. At home I leave appliances on, forget rent transfers, and accumulate unfinished projects.
+
+CLINICIAN: Childhood?
+AP: Before age 12 my reports said I talked, rushed, forgot instructions, and did not show my ability consistently. Mum sat beside me for homework. I was always climbing or moving and was called intense.
+
+CLINICIAN: Other settings?
+AP: My housemate prompts chores and says I dominate conversations. As a tutor I overprepare so students see me as organised. My supervisor sees polished final work but not the missed sleep and extensions.
+
+CLINICIAN: Mental health?
+AP: Anxiety has been present since late adolescence and worsens before evaluation. I had a depressive episode four years ago that is now in remission. Attention, restlessness, and impulsive speech were present well before either problem. No mania, psychosis, substance dependence, or current self-harm thoughts.
+
+CLINICIAN OBSERVATION: AP brought detailed notes, spoke rapidly, interrupted twice, apologised, and returned to the topic with prompts. Affect was anxious but reactive; thought form was coherent. No acute safety concern was observed.
+
+CLINICIAN: Strengths?
+AP: I am curious, energetic, good at teaching, and persistent. Exercise, written agendas, quiet study spaces, and accountability help.

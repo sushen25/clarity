@@ -1,0 +1,18 @@
+SYNTHETIC TEST FIXTURE - NOT FOR CLINICAL USE
+Persona: 04_adolescent_intentionally_incomplete
+Title: Synthetic incomplete interview
+Reporter: adolescent
+Setting: clinical
+Source type: transcript
+
+TRANSCRIPT
+CLINICIAN: What concerns you?
+TN: I cannot focus in maths and I forget assignments. It feels worse this year.
+
+CLINICIAN: Was this present in primary school or at home?
+TN: I am not sure. Nobody else has been asked yet.
+
+CLINICIAN: Mood, sleep, health, or other possible explanations?
+TN: We did not cover that today.
+
+CLINICIAN OBSERVATION: A brief telehealth interview was completed. The available session was too short for developmental, medical, mental-health, differential, impairment, strengths, or safety assessment.

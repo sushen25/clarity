@@ -1,0 +1,13 @@
+.env
+.venv/
+node_modules/
+frontend/dist/
+data/
+storage/
+backups/
+*.pyc
+__pycache__/
+.pytest_cache/
+coverage.xml
+.DS_Store
+

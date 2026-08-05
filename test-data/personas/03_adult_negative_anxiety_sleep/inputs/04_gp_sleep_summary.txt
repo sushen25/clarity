@@ -1,0 +1,9 @@
+SYNTHETIC TEST FIXTURE - NOT FOR CLINICAL USE
+Persona: 03_adult_negative_anxiety_sleep
+Title: Synthetic medical and sleep summary
+Reporter: general practitioner
+Setting: clinical
+Source type: medical_summary
+
+SUMMARY
+This fictional medical summary records rotating shift-work sleep disruption and anxiety symptoms. Screening blood work is described as unremarkable for software-test purposes. No seizure disorder, significant head injury, untreated thyroid condition, substance misuse, mania, psychosis, or current self-harm risk is reported. The temporal relationship between sleep loss, worry, and concentration should be assessed before attributing symptoms to ADHD. Protective factors include family support, employment, insight, and engagement in treatment.

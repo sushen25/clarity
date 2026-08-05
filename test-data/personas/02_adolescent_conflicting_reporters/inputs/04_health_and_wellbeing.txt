@@ -1,0 +1,13 @@
+SYNTHETIC TEST FIXTURE - NOT FOR CLINICAL USE
+Persona: 02_adolescent_conflicting_reporters
+Title: Synthetic health and differential summary
+Reporter: school wellbeing clinician
+Setting: clinical
+Source type: medical_summary
+
+SUMMARY
+This fictional wellbeing summary records normal hearing and vision screening, no known neurological illness, no significant head injury, and no current medication effect. LM reports performance anxiety linked to unfinished school tasks, without panic disorder, mania, psychosis, substance use, or current self-harm risk. Sleep and appetite are broadly stable.
+
+Differential formulation remains required and should integrate alternative explanations described in the health, learning, emotional, and environmental history.
+
+Available history does not show a single-subject skill deficit, although formal learning assessment has not been supplied. Protective strengths include supportive parents, friendships, art participation, and willingness to use planning supports.

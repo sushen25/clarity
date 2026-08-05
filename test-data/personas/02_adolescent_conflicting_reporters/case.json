@@ -1,0 +1,20 @@
+{
+  "cohort": "adolescent",
+  "patient_initials": "LM",
+  "demographics": {
+    "age": 15,
+    "pronouns": "she/her",
+    "school_year": 10,
+    "living_arrangement": "shared care between parents"
+  },
+  "referral_question": "Assess attention and executive-function concerns associated with declining school completion and family conflict.",
+  "assessment_dates": [
+    "2026-05-04",
+    "2026-05-11"
+  ],
+  "instruments": [
+    "Synthetic Youth Attention Profile (SYAP)",
+    "Synthetic School Function Index (SSFI)"
+  ],
+  "cloud_consent": true
+}

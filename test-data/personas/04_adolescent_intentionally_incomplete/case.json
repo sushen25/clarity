@@ -1,0 +1,17 @@
+{
+  "cohort": "adolescent",
+  "patient_initials": "TN",
+  "demographics": {
+    "age": 14,
+    "pronouns": "they/them",
+    "school_year": 9
+  },
+  "referral_question": "Explore self-reported concentration problems. Collateral and health history have not yet been obtained.",
+  "assessment_dates": [
+    "2026-07-02"
+  ],
+  "instruments": [
+    "Synthetic Youth Attention Profile (SYAP)"
+  ],
+  "cloud_consent": true
+}

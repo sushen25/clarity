@@ -1,0 +1,42 @@
+[
+  {
+    "upload_order": 1,
+    "filename": "inputs/01_assessment_transcript.txt",
+    "source_type": "transcript",
+    "reporter": "patient",
+    "setting": "clinical",
+    "instrument": ""
+  },
+  {
+    "upload_order": 2,
+    "filename": "inputs/02_self_history.docx",
+    "source_type": "questionnaire_narrative",
+    "reporter": "patient",
+    "setting": "home",
+    "instrument": ""
+  },
+  {
+    "upload_order": 3,
+    "filename": "inputs/03_partner_collateral.pdf",
+    "source_type": "collateral_report",
+    "reporter": "partner",
+    "setting": "home",
+    "instrument": ""
+  },
+  {
+    "upload_order": 4,
+    "filename": "inputs/04_gp_medical_summary.txt",
+    "source_type": "medical_summary",
+    "reporter": "general practitioner",
+    "setting": "clinical",
+    "instrument": ""
+  },
+  {
+    "upload_order": 5,
+    "filename": "inputs/05_scored_instrument_summary.pdf",
+    "source_type": "instrument_export",
+    "reporter": "patient and partner",
+    "setting": "home",
+    "instrument": "Synthetic Adult Attention Profile (SAAP); Synthetic Executive Function Index (SEFI)"
+  }
+]

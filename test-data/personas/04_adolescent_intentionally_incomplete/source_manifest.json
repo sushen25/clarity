@@ -1,0 +1,26 @@
+[
+  {
+    "upload_order": 1,
+    "filename": "inputs/01_brief_interview.txt",
+    "source_type": "transcript",
+    "reporter": "adolescent",
+    "setting": "clinical",
+    "instrument": ""
+  },
+  {
+    "upload_order": 2,
+    "filename": "inputs/02_self_report.docx",
+    "source_type": "questionnaire_narrative",
+    "reporter": "adolescent",
+    "setting": "school",
+    "instrument": ""
+  },
+  {
+    "upload_order": 3,
+    "filename": "inputs/03_scored_instrument_summary.pdf",
+    "source_type": "instrument_export",
+    "reporter": "adolescent",
+    "setting": "school",
+    "instrument": "Synthetic Youth Attention Profile (SYAP)"
+  }
+]

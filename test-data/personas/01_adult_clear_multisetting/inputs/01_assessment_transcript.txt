@@ -1,0 +1,27 @@
+SYNTHETIC TEST FIXTURE - NOT FOR CLINICAL USE
+Persona: 01_adult_clear_multisetting
+Title: Synthetic assessment interview transcript
+Reporter: patient
+Setting: clinical
+Source type: transcript
+
+TRANSCRIPT
+CLINICIAN: What led to the referral?
+SK: At work I miss details in design specifications, jump between tasks, and need reminders for deadlines. At home I start chores and leave them half finished. My partner says I interrupt and fidget through meals. These problems have been present for years, not only during stressful weeks.
+
+CLINICIAN: What was childhood like?
+SK: Primary school reports repeatedly said I was capable but rushed, forgot equipment, called out, and needed to sit near the teacher. I lost homework and my parents used a checklist from about age eight. In secondary school I relied on last-minute effort and frequent extensions.
+
+CLINICIAN: Where is the impact now?
+SK: At work I have missed three internal deadlines in six months and a colleague checks my handovers. At home I have paid two bills late and arguments happen when I forget agreed tasks. Socially I interrupt friends and sometimes commit to plans without checking my calendar.
+
+CLINICIAN: Restlessness or impulsivity?
+SK: I tap my feet, leave long meetings for breaks, speak before people finish, and buy hobby equipment impulsively. I can remain seated when required, but it takes effort.
+
+CLINICIAN: Mood, anxiety, sleep, substances, or medical issues?
+SK: I get anxious before deadlines but the attention problems occur when calm. Mood is generally steady. I sleep seven hours most nights. I drink alcohol socially and do not use illicit substances. There is no history of mania, psychosis, seizures, head injury, or current safety risk.
+
+CLINICIAN OBSERVATION: SK arrived on time with notes, was cooperative and reflective, shifted position often, and occasionally answered before a question was complete. Speech was coherent. No acute distress or safety concern was observed.
+
+CLINICIAN: What goes well?
+SK: I am creative, good at visual problem solving, warm with clients, and persistent when a project is meaningful. Timers, written steps, and quiet rooms help.

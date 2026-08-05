@@ -1,0 +1,20 @@
+{
+  "cohort": "adult",
+  "patient_initials": "RB",
+  "demographics": {
+    "age": 41,
+    "pronouns": "he/him",
+    "occupation": "registered nurse",
+    "living_arrangement": "with spouse and child"
+  },
+  "referral_question": "Clarify whether recent concentration problems reflect ADHD or another explanation.",
+  "assessment_dates": [
+    "2026-04-08",
+    "2026-04-15"
+  ],
+  "instruments": [
+    "Synthetic Adult Attention Profile (SAAP)",
+    "Synthetic Anxiety and Sleep Context Scale (SASCS)"
+  ],
+  "cloud_consent": true
+}

@@ -1,0 +1,9 @@
+SYNTHETIC TEST FIXTURE - NOT FOR CLINICAL USE
+Persona: 01_adult_clear_multisetting
+Title: Synthetic medical and mental-health summary
+Reporter: general practitioner
+Setting: clinical
+Source type: medical_summary
+
+SUMMARY
+This is a fictional GP summary for software testing. SK reports lifelong attention and organisation difficulties. Physical examination was unremarkable. Sleep is usually seven hours; there is no reported sleep apnoea, seizure disorder, significant head injury, thyroid disorder, or current substance misuse. Mild performance anxiety is noted without panic, major depressive episode, mania, psychosis, or current self-harm risk. Medical assessment does not identify a better primary explanation. Family history includes a first-degree relative with attention difficulties. Strengths include exercise, stable housing, supportive relationships, and engagement with care.

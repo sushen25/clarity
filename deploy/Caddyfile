@@ -1,0 +1,27 @@
+{$PUBLIC_DOMAIN} {
+  encode zstd gzip
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    X-Content-Type-Options "nosniff"
+    X-Frame-Options "DENY"
+    Referrer-Policy "no-referrer"
+    Permissions-Policy "camera=(), microphone=(), geolocation=()"
+    Content-Security-Policy "default-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
+    -Server
+  }
+  request_body {
+    max_size 25MB
+  }
+  reverse_proxy web:8000
+  log {
+    output stdout
+    format filter {
+      wrap json
+      fields {
+        request>uri query delete
+        request>headers>Cookie delete
+        request>headers>Authorization delete
+      }
+    }
+  }
+}

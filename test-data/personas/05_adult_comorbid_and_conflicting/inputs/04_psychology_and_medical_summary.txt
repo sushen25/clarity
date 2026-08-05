@@ -1,0 +1,13 @@
+SYNTHETIC TEST FIXTURE - NOT FOR CLINICAL USE
+Persona: 05_adult_comorbid_and_conflicting
+Title: Synthetic differential and medical summary
+Reporter: treating psychologist and general practitioner
+Setting: clinical
+Source type: medical_summary
+
+SUMMARY
+This fictional combined summary notes a history of generalised anxiety symptoms and a past depressive episode now in remission. Attention and restlessness reportedly predate these conditions and persist outside acute mood episodes. Sleep becomes restricted during deadline crises but is otherwise seven to eight hours. No seizure disorder, significant head injury, thyroid concern, substance dependence, mania, psychosis, or current self-harm risk is reported.
+
+Functional impairment includes missed rent transfers, household conflict, deadline crises, and extensions.
+
+Differential review should consider anxiety, mood history, sleep, and compensatory masking. Protective strengths include insight, treatment engagement, exercise, friendships, and meaningful study.

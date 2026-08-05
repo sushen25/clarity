@@ -1,0 +1,88 @@
+{
+  "scenario": "insufficient evidence; gap-detection fixture",
+  "expected_warning_fragments_after_verification": [
+    "Developmental history",
+    "Medical history",
+    "Differential",
+    "strengths",
+    "two important settings",
+    "parent/carer or teacher collateral"
+  ],
+  "suggested_final_conclusion": "Insufficient information is available to determine whether ADHD criteria are met. Developmental, medical, collateral, differential, and cross-setting evidence should be obtained.",
+  "contradictions_to_notice": [],
+  "criterion_outcomes": {
+    "A1.1": {
+      "clinician_outcome": "insufficient",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A1.2": {
+      "clinician_outcome": "insufficient",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A1.3": {
+      "clinician_outcome": "insufficient",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A1.4": {
+      "clinician_outcome": "insufficient",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A1.5": {
+      "clinician_outcome": "insufficient",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A1.6": {
+      "clinician_outcome": "insufficient",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A1.7": {
+      "clinician_outcome": "insufficient",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A1.8": {
+      "clinician_outcome": "insufficient",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A1.9": {
+      "clinician_outcome": "insufficient",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A2.1": {
+      "clinician_outcome": "insufficient",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A2.2": {
+      "clinician_outcome": "insufficient",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A2.3": {
+      "clinician_outcome": "insufficient",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A2.4": {
+      "clinician_outcome": "insufficient",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A2.5": {
+      "clinician_outcome": "insufficient",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A2.6": {
+      "clinician_outcome": "insufficient",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A2.7": {
+      "clinician_outcome": "insufficient",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A2.8": {
+      "clinician_outcome": "insufficient",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A2.9": {
+      "clinician_outcome": "insufficient",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    }
+  },
+  "do_not_upload": true
+}

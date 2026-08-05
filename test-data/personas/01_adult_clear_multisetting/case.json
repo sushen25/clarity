@@ -1,0 +1,20 @@
+{
+  "cohort": "adult",
+  "patient_initials": "SK",
+  "demographics": {
+    "age": 33,
+    "pronouns": "they/them",
+    "occupation": "product designer",
+    "living_arrangement": "with partner"
+  },
+  "referral_question": "Assess longstanding attention, organisation, restlessness, and impulsivity concerns affecting work and home functioning.",
+  "assessment_dates": [
+    "2026-06-10",
+    "2026-06-17"
+  ],
+  "instruments": [
+    "Synthetic Adult Attention Profile (SAAP)",
+    "Synthetic Executive Function Index (SEFI)"
+  ],
+  "cloud_consent": true
+}

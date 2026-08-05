@@ -1,0 +1,42 @@
+[
+  {
+    "upload_order": 1,
+    "filename": "inputs/01_adolescent_interview.txt",
+    "source_type": "transcript",
+    "reporter": "adolescent",
+    "setting": "clinical",
+    "instrument": ""
+  },
+  {
+    "upload_order": 2,
+    "filename": "inputs/02_parent_history.docx",
+    "source_type": "collateral_report",
+    "reporter": "mother and father",
+    "setting": "home",
+    "instrument": ""
+  },
+  {
+    "upload_order": 3,
+    "filename": "inputs/03_teacher_collateral.pdf",
+    "source_type": "collateral_report",
+    "reporter": "English and science teachers",
+    "setting": "school",
+    "instrument": ""
+  },
+  {
+    "upload_order": 4,
+    "filename": "inputs/04_health_and_wellbeing.txt",
+    "source_type": "medical_summary",
+    "reporter": "school wellbeing clinician",
+    "setting": "clinical",
+    "instrument": ""
+  },
+  {
+    "upload_order": 5,
+    "filename": "inputs/05_scored_instrument_summary.pdf",
+    "source_type": "instrument_export",
+    "reporter": "adolescent, mother, father, and teacher",
+    "setting": "school",
+    "instrument": "Synthetic Youth Attention Profile (SYAP); Synthetic School Function Index (SSFI)"
+  }
+]

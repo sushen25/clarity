@@ -1,0 +1,27 @@
+SYNTHETIC TEST FIXTURE - NOT FOR CLINICAL USE
+Persona: 03_adult_negative_anxiety_sleep
+Title: Synthetic differential assessment transcript
+Reporter: patient
+Setting: clinical
+Source type: transcript
+
+TRANSCRIPT
+CLINICIAN: When did concentration become a concern?
+RB: About nine months ago after I moved onto rotating night shifts and my father became ill. I reread medication protocols and feel mentally foggy after poor sleep. On annual leave, after several regular nights, my focus mostly returns.
+
+CLINICIAN: What about childhood and study?
+RB: I do not remember attention or behaviour problems. Reports described me as organised and quiet. I completed homework independently, kept track of equipment, and finished nursing training without extensions.
+
+CLINICIAN: Impact across settings?
+RB: The main impact is during night work. At home after a shift I am irritable and forget small requests, but on days off I manage bills, appointments, cooking, and my child's routines.
+
+CLINICIAN: Hyperactivity or impulsivity?
+RB: No longstanding restlessness, interrupting, excessive talking, or impulsive decisions.
+
+CLINICIAN: Mood and worry?
+RB: I worry about making a clinical error and about my father's health. I lie awake after shifts and sleep four to five broken hours. I feel tense but have no history of mania, psychosis, substance misuse, or self-harm thoughts.
+
+CLINICIAN OBSERVATION: RB appeared tired and worried but remained seated, followed the interview sequence, and gave organised examples. No acute safety concern was observed.
+
+CLINICIAN: Strengths?
+RB: I am careful, compassionate, methodical, and willing to address sleep and anxiety.

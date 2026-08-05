@@ -1,0 +1,83 @@
+{
+  "scenario": "negative ADHD conclusion; sleep disruption and anxiety are stronger explanations",
+  "expected_warning_fragments_after_verification": [],
+  "suggested_final_conclusion": "The synthetic evidence is designed to support a clinician conclusion that ADHD criteria are not met because childhood onset and pervasive cross-setting symptoms are not established, while sleep disruption and anxiety track the recent difficulties.",
+  "contradictions_to_notice": [
+    "RB describes severe concentration problems after night shifts, while spouse and manager report typical functioning after adequate sleep."
+  ],
+  "criterion_outcomes": {
+    "A1.1": {
+      "clinician_outcome": "not_met",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A1.2": {
+      "clinician_outcome": "not_met",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A1.3": {
+      "clinician_outcome": "not_met",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A1.4": {
+      "clinician_outcome": "not_met",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A1.5": {
+      "clinician_outcome": "not_met",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A1.6": {
+      "clinician_outcome": "not_met",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A1.7": {
+      "clinician_outcome": "not_met",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A1.8": {
+      "clinician_outcome": "not_met",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A1.9": {
+      "clinician_outcome": "not_met",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A2.1": {
+      "clinician_outcome": "not_met",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A2.2": {
+      "clinician_outcome": "not_met",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A2.3": {
+      "clinician_outcome": "not_met",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A2.4": {
+      "clinician_outcome": "not_met",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A2.5": {
+      "clinician_outcome": "not_met",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A2.6": {
+      "clinician_outcome": "not_met",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A2.7": {
+      "clinician_outcome": "not_met",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A2.8": {
+      "clinician_outcome": "not_met",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    },
+    "A2.9": {
+      "clinician_outcome": "not_met",
+      "notes": "Synthetic expected-review oracle; clinician verification still required."
+    }
+  },
+  "do_not_upload": true
+}

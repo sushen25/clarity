@@ -1,0 +1,42 @@
+[
+  {
+    "upload_order": 1,
+    "filename": "inputs/01_assessment_transcript.txt",
+    "source_type": "transcript",
+    "reporter": "patient",
+    "setting": "clinical",
+    "instrument": ""
+  },
+  {
+    "upload_order": 2,
+    "filename": "inputs/02_developmental_history.docx",
+    "source_type": "collateral_report",
+    "reporter": "mother",
+    "setting": "home",
+    "instrument": ""
+  },
+  {
+    "upload_order": 3,
+    "filename": "inputs/03_housemate_and_supervisor.pdf",
+    "source_type": "collateral_report",
+    "reporter": "housemate and university supervisor",
+    "setting": "home and university",
+    "instrument": ""
+  },
+  {
+    "upload_order": 4,
+    "filename": "inputs/04_psychology_and_medical_summary.txt",
+    "source_type": "medical_summary",
+    "reporter": "treating psychologist and general practitioner",
+    "setting": "clinical",
+    "instrument": ""
+  },
+  {
+    "upload_order": 5,
+    "filename": "inputs/05_scored_instrument_summary.pdf",
+    "source_type": "instrument_export",
+    "reporter": "patient and mother",
+    "setting": "home",
+    "instrument": "Synthetic Adult Attention Profile (SAAP); Synthetic Mood Context Inventory (SMCI)"
+  }
+]

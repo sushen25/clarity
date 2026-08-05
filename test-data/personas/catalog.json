@@ -1,0 +1,32 @@
+[
+  {
+    "folder": "01_adult_clear_multisetting",
+    "cohort": "adult",
+    "summary": "Adult with longstanding, cross-setting attention and hyperactivity/impulsivity concerns, consistent collateral, and documented differential review.",
+    "source_count": 5
+  },
+  {
+    "folder": "02_adolescent_conflicting_reporters",
+    "cohort": "adolescent",
+    "summary": "Adolescent with strong school impairment, parent/teacher disagreement, developmental evidence, and anxiety considered as a co-occurring factor.",
+    "source_count": 5
+  },
+  {
+    "folder": "03_adult_negative_anxiety_sleep",
+    "cohort": "adult",
+    "summary": "Adult with recent attention complaints better aligned with shift-work sleep disruption and anxiety, with negative childhood and collateral evidence.",
+    "source_count": 5
+  },
+  {
+    "folder": "04_adolescent_intentionally_incomplete",
+    "cohort": "adolescent",
+    "summary": "Adolescent self-report-only case designed to trigger missing collateral, setting, developmental, medical, differential, and strengths warnings.",
+    "source_count": 3
+  },
+  {
+    "folder": "05_adult_comorbid_and_conflicting",
+    "cohort": "adult",
+    "summary": "Adult with developmental and cross-setting ADHD evidence, clinically significant anxiety, and a university reporter who sees limited outward impairment.",
+    "source_count": 5
+  }
+]

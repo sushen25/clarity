@@ -1,0 +1,27 @@
+SYNTHETIC TEST FIXTURE - NOT FOR CLINICAL USE
+Persona: 02_adolescent_conflicting_reporters
+Title: Synthetic adolescent interview transcript
+Reporter: adolescent
+Setting: clinical
+Source type: transcript
+
+TRANSCRIPT
+CLINICIAN: What has been difficult?
+LM: I understand lessons but miss instructions, forget which portal has homework, and submit work unfinished. In exams I skip parts of questions. I lose my bus card and sports gear.
+
+CLINICIAN: Was this present when you were younger?
+LM: In primary school I was always moved to the front and teachers checked my diary. Dad packed my bag until Year 7. I daydreamed and finished slowly, but marks were okay because there was more help.
+
+CLINICIAN: Does it happen outside school?
+LM: At Dad's house I forget chores and leave things everywhere. Mum writes a schedule and says I am fine when I follow it. With friends I miss details in plans and arrive without what I need.
+
+CLINICIAN: Restlessness or impulsivity?
+LM: I doodle and bounce my leg, but I do not usually leave my seat or interrupt.
+
+CLINICIAN: Mood, worry, sleep, and safety?
+LM: I worry about grades and sometimes avoid opening the school portal because I expect bad news. Worry became worse after grades dropped. I sleep around eight hours. I do not use alcohol or drugs. I have not had thoughts of harming myself.
+
+CLINICIAN OBSERVATION: LM was thoughtful and initially anxious, checked the question twice, lost her place during a longer explanation, and used written notes effectively. No acute safety concern was observed.
+
+CLINICIAN: Strengths?
+LM: I am good at art, supportive with friends, and work hard when instructions are broken into steps.
