@@ -40,6 +40,22 @@ pytest tests/test_parsers.py
 
 Backend tests should use temporary databases and storage roots. Never point tests at a live or clinician-used database.
 
+### Resetting local development data
+
+Stop Flask and the background worker, then run this command from the repository root:
+
+```sh
+make reset-local-data CONFIRM=DELETE
+```
+
+The target permanently removes the local `data` and `storage` directories, including accounts, cases, evidence, jobs, uploaded sources, previews, and generated reports. It recreates empty directories and deliberately leaves `backups` untouched. It refuses to run without the exact confirmation value, outside the project root, or when `lsof` reports that the SQLite database is still open.
+
+Create a fresh administrator afterward:
+
+```sh
+python manage.py create-admin --username admin --full-name "Clinical Administrator"
+```
+
 ## Frontend workflow
 
 ```sh

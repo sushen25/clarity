@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 from pathlib import Path
 
@@ -16,6 +17,8 @@ def create_app(test_config: dict | None = None) -> Flask:
     app.config.from_object(Config())
     if test_config:
         app.config.update(test_config)
+    log_level = getattr(logging, str(app.config["LOG_LEVEL"]).upper(), logging.INFO)
+    app.logger.setLevel(log_level)
     if not app.config.get("TESTING") and app.config["SECRET_KEY"] == "development-only-change-me-please":
         raise RuntimeError("SECRET_KEY must be set to a unique random value before the application starts.")
 

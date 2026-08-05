@@ -7,6 +7,7 @@ Copy `.env.example` to `.env`; `.env` is excluded from source control. Productio
 | Variable | Default/example | Purpose |
 | --- | --- | --- |
 | `SECRET_KEY` | replace | Random secret of at least 32 bytes for signed sessions |
+| `LOG_LEVEL` | `INFO` | Application log threshold; `INFO` shows AI provider and Bedrock request lifecycle records |
 | `DATABASE_PATH` | `data/app.db` | SQLite database path; Compose overrides it with `/data/app.db` |
 | `STORAGE_ROOT` | `storage` | Source and generated-document root; Compose overrides it with `/storage` |
 | `COOKIE_SECURE` | `false` locally | Send the session cookie only over HTTPS; must be `true` in deployment |
@@ -15,7 +16,12 @@ Copy `.env.example` to `.env`; `.env` is excluded from source control. Productio
 | `BEDROCK_ENABLED` | `false` | Enables real AWS model calls when `true` |
 | `AWS_REGION` | `ap-southeast-2` | Bedrock client region |
 | `BEDROCK_MODEL_ID` | `au.anthropic.claude-sonnet-4-6` | Pinned Australian geographic inference profile |
-| `PROMPT_VERSION` | `2026-08-poc-v1` | Version recorded with generated drafts |
+| `BEDROCK_CONNECT_TIMEOUT_SECONDS` | `10` | Maximum time to establish a Bedrock connection |
+| `BEDROCK_READ_TIMEOUT_SECONDS` | `600` | Maximum wait for one non-streaming Bedrock response |
+| `BEDROCK_SDK_MAX_ATTEMPTS` | `2` | Total initial and retry HTTP attempts made by the AWS SDK |
+| `BEDROCK_EXTRACTION_MAX_TOKENS` | `8000` | Maximum model output for an extraction request |
+| `BEDROCK_DRAFT_MAX_TOKENS` | `7000` | Maximum model output for a report-drafting request |
+| `PROMPT_VERSION` | `2026-08-poc-v2` | Version recorded with generated drafts |
 | `REPORT_TEMPLATE` | `templates/adhd_report_template.docx` | De-identified template; Compose overrides it with the container path |
 | `LIBREOFFICE_BIN` | `soffice` | Headless preview converter executable |
 | `MAX_UPLOAD_MB` | `25` | Whole-request upload limit in MB |
@@ -62,6 +68,25 @@ Before enabling Bedrock:
 7. Verify that draft records contain the expected model and prompt versions and that logs contain no submitted text.
 
 Never enable cloud processing merely to make a local test pass. The local organiser exists for offline workflow development and is intentionally non-diagnostic.
+
+### Confirming which AI provider is active
+
+Run the background worker in the foreground while testing. With `LOG_LEVEL=INFO`, it emits a privacy-safe provider record for every extraction or drafting job. When Bedrock is enabled, a successful call produces lines resembling:
+
+```text
+clinical_ai.provider_selected provider=bedrock region=ap-southeast-2 model_id=au.anthropic.claude-sonnet-4-6
+bedrock.request_started operation=extract region=ap-southeast-2 model_id=au.anthropic.claude-sonnet-4-6
+bedrock.http_attempt operation=extract attempt=1 max_attempts=2
+bedrock.response_received operation=extract region=ap-southeast-2 model_id=au.anthropic.claude-sonnet-4-6 duration_ms=1234 http_attempts=1 request_id=... stop_reason=end_turn input_tokens=... output_tokens=...
+```
+
+If cloud processing is disabled, the provider line instead contains `provider=local-heuristic bedrock_enabled=false`. Bedrock failures produce `bedrock.request_failed` with the exception type, AWS error code, and AWS request ID before the job retry mechanism handles the failure.
+
+These records deliberately omit source text, prompts, model output, patient identifiers, credentials, and exception messages. Do not enable Boto3/Botocore wire-level debug logging when processing clinical material because those logs can include request content.
+
+Bedrock uses a 10-minute read timeout for each non-streaming request and at most two total SDK HTTP attempts. Each attempt emits `bedrock.http_attempt`, making an SDK retry visible without enabling unsafe wire logging. Extraction and drafting use separate output limits so a draft cannot silently inherit an unnecessarily large extraction allowance. The SQLite job queue can still retry a failed job according to its bounded retry policy.
+
+Only transient network, timeout, throttling, model-not-ready, and Bedrock service errors are retried. JSON, schema, evidence-link, and other deterministic validation failures fail immediately to avoid repeated paid calls. The Report screen shows queued/running attempts and sanitized failure codes, and the API returns an existing active draft job instead of creating a duplicate.
 
 ## Raspberry Pi deployment
 

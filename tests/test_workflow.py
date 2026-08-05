@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import io
+import os
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 from app.db import get_db
 from app.jobs import claim_next_job, complete
@@ -36,12 +38,30 @@ def test_complete_clinician_workflow(app, authenticated, sample_txt):
     detail = client.get(f"/api/cases/{case_id}").json
     assert detail["sources"][0]["extraction_status"] == "completed"
     assert detail["evidence"]
+    assert {item["value"] for item in detail["evidence_domains"]} >= {"inattention", "impairment", "other"}
+    invalid_domain = client.patch(
+        f"/api/cases/{case_id}/evidence/{detail['evidence'][0]['id']}",
+        headers=headers,
+        json={"domain": "not-a-clinical-domain"},
+    )
+    assert invalid_domain.status_code == 400
+    assert invalid_domain.json["error"] == "invalid_domain"
+    corrected_domain = client.patch(
+        f"/api/cases/{case_id}/evidence/{detail['evidence'][0]['id']}",
+        headers=headers,
+        json={"domain": "inattention"},
+    )
+    assert corrected_domain.status_code == 200
+    assert corrected_domain.json["domain"] == "inattention"
     for item in detail["evidence"]:
         result = client.patch(f"/api/cases/{case_id}/evidence/{item['id']}", headers=headers, json={"verified": True})
         assert result.status_code == 200
 
     requested = client.post(f"/api/cases/{case_id}/drafts", headers=headers, json={})
     assert requested.status_code == 202
+    duplicate = client.post(f"/api/cases/{case_id}/drafts", headers=headers, json={})
+    assert duplicate.status_code == 202
+    assert duplicate.json["id"] == requested.json["id"]
     _run_jobs(app)
     detail = client.get(f"/api/cases/{case_id}").json
     draft = detail["drafts"][0]
@@ -65,7 +85,21 @@ def test_complete_clinician_workflow(app, authenticated, sample_txt):
     assert approved.status_code == 200
     assert approved.json["state"] == "clinician-approved"
     _run_jobs(app)
-    assert client.get(f"/api/cases/{case_id}/drafts/{draft['id']}/docx").status_code == 200
+    absolute_storage_root = app.config["STORAGE_ROOT"]
+    app.config["STORAGE_ROOT"] = os.path.relpath(absolute_storage_root, Path.cwd())
+    try:
+        download = client.get(f"/api/cases/{case_id}/drafts/{draft['id']}/docx")
+        assert download.status_code == 200
+        assert download.data.startswith(b"PK")
+        assert "attachment" in download.headers["Content-Disposition"]
+
+        latest = client.get(f"/api/cases/{case_id}").json["drafts"][0]
+        if latest["preview_path"]:
+            preview = client.get(f"/api/cases/{case_id}/drafts/{draft['id']}/preview")
+            assert preview.status_code == 200
+            assert preview.data.startswith(b"%PDF")
+    finally:
+        app.config["STORAGE_ROOT"] = absolute_storage_root
 
     immutable = client.patch(f"/api/cases/{case_id}/drafts/{draft['id']}", headers=headers, json={"state": "draft"})
     assert immutable.status_code == 409

@@ -7,7 +7,7 @@ from pathlib import Path
 from flask import Blueprint, current_app, g, jsonify, request, send_file
 
 from .auth import login_required
-from .clinical import CRITERIA, OUTCOMES, clinical_gaps
+from .clinical import CRITERIA, DOMAINS, DOMAIN_DEFINITIONS, OUTCOMES, clinical_gaps
 from .db import audit, get_db, new_id, now, row_dict
 from .jobs import enqueue
 from .parsers import ALLOWED_EXTENSIONS
@@ -84,7 +84,12 @@ def get_case(case_id: str):
     instruments = [row_dict(row) for row in get_db().execute("SELECT * FROM instrument_summaries WHERE case_id=? ORDER BY created_at", (case_id,))]
     drafts = [row_dict(row) for row in get_db().execute("SELECT * FROM report_drafts WHERE case_id=? ORDER BY version DESC", (case_id,))]
     jobs = [row_dict(row) for row in get_db().execute("SELECT * FROM jobs WHERE case_id=? ORDER BY created_at DESC LIMIT 20", (case_id,))]
-    return jsonify({"case": case, "sources": case["sources"], "evidence": evidence, "criteria": criteria, "instruments": instruments, "drafts": drafts, "jobs": jobs,
+    evidence_domains = [
+        {"value": value, "label": value.replace("_", " ").title(), "description": description}
+        for value, description in DOMAIN_DEFINITIONS.items()
+    ]
+    return jsonify({"case": case, "sources": case["sources"], "evidence": evidence, "evidence_domains": evidence_domains,
+                    "criteria": criteria, "instruments": instruments, "drafts": drafts, "jobs": jobs,
                     "warnings": clinical_gaps(case, evidence, case["sources"])})
 
 
@@ -168,6 +173,8 @@ def update_evidence(case_id: str, evidence_id: str):
         return jsonify({"error": "evidence_not_found"}), 404
     body = request.get_json(silent=True) or {}
     allowed = {"domain", "source_location", "supporting_text", "reporter", "setting", "confidence", "contradiction_status", "verified"}
+    if "domain" in body and body["domain"] not in DOMAINS:
+        return jsonify({"error": "invalid_domain", "allowed_domains": list(DOMAINS)}), 400
     fields, values = [], []
     for key in allowed:
         if key in body:
@@ -239,6 +246,12 @@ def generate_draft(case_id: str):
         return error
     if current_app.config["BEDROCK_ENABLED"] and not case["cloud_consent"]:
         return jsonify({"error": "cloud_consent_required"}), 409
+    active = get_db().execute(
+        "SELECT * FROM jobs WHERE case_id=? AND job_type='generate_draft' AND status IN ('queued','running') ORDER BY created_at DESC LIMIT 1",
+        (case_id,),
+    ).fetchone()
+    if active:
+        return jsonify(row_dict(active)), 202
     job = enqueue("generate_draft", case_id, {})
     audit("draft.requested", g.user["id"], case_id, job["id"])
     return jsonify(job), 202
@@ -306,7 +319,10 @@ def _download(case_id: str, draft_id: str, field: str, mimetype: str):
     row = get_db().execute(f"SELECT {field},version FROM report_drafts WHERE id=? AND case_id=?", (draft_id, case_id)).fetchone()
     if not row or not row[field]:
         return jsonify({"error": "report_file_not_ready"}), 404
-    path = Path(current_app.config["STORAGE_ROOT"]) / row[field]
+    storage_root = Path(current_app.config["STORAGE_ROOT"]).resolve()
+    path = (storage_root / row[field]).resolve()
+    if not path.is_relative_to(storage_root):
+        return jsonify({"error": "report_file_missing"}), 404
     if not path.is_file():
         return jsonify({"error": "report_file_missing"}), 404
     audit(f"draft.{field}.downloaded", g.user["id"], case_id, draft_id, {"version": row["version"]})

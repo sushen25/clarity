@@ -3,10 +3,11 @@ from __future__ import annotations
 
 import json
 import shutil
+import zipfile
+from datetime import UTC, datetime
 from pathlib import Path
 
 from docx import Document
-from docx.enum.section import WD_SECTION
 from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
@@ -17,7 +18,8 @@ from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
-from reportlab.platypus import PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+from reportlab import rl_config
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -26,6 +28,7 @@ INK = "173A44"
 BLUE = "2E74B5"
 MUTED = "66737A"
 LIGHT = "E8EEF5"
+rl_config.invariant = 1
 
 
 def src(filename: str, file_type: str, source_type: str, reporter: str, setting: str,
@@ -260,7 +263,7 @@ PERSONAS = [
                 ("Strengths and risk", "Both reporters describe AP as creative, caring, and committed. Neither reports intoxication, mania, psychosis, or acute safety concerns."),
             ]),
             src("04_psychology_and_medical_summary.txt", "txt", "medical_summary", "treating psychologist and general practitioner", "clinical", "", "Synthetic differential and medical summary", [
-                ("Summary", "This fictional combined summary notes a history of generalised anxiety symptoms and a past depressive episode now in remission. Attention and restlessness reportedly predate these conditions and persist outside acute mood episodes. Sleep becomes restricted during deadline crises but is otherwise seven to eight hours. No seizure disorder, significant head injury, thyroid concern, substance dependence, mania, psychosis, or current self-harm risk is reported.\n\nFunctional impairment includes missed rent transfers, household conflict, deadline crises, and extensions.\n\nDifferential review should consider anxiety, mood history, sleep, and compensatory masking. Protective strengths include insight, treatment engagement, exercise, friendships, and meaningful study."),
+                ("Summary", "This fictional combined summary notes a history of generalised anxiety symptoms and a past depressive episode now in remission. Attention and restlessness reportedly predate these conditions and persist outside acute mood episodes. Sleep becomes restricted during deadline crises but is otherwise seven to eight hours. No seizure disorder, significant head injury, thyroid concern, substance dependence, mania, psychosis, or current self-harm risk is reported.\n\nFunctional impairment includes late rent transfers, household conflict, repeated extension requests, and disrupted routines.\n\nDifferential review should consider anxiety, mood history, sleep, and compensatory masking. Protective strengths include insight, treatment engagement, exercise, friendships, and meaningful study."),
             ]),
             src("05_scored_instrument_summary.pdf", "pdf", "instrument_export", "patient and mother", "home", "Synthetic Adult Attention Profile (SAAP); Synthetic Mood Context Inventory (SMCI)", "Fictional already-scored instrument summary", [
                 ("Important notice", "Fictional instruments and synthetic values for software testing only; no proprietary items are reproduced."),
@@ -403,8 +406,19 @@ def write_docx(path: Path, source: dict, persona_label: str) -> None:
     props.author = "Clarity Fixture Generator"
     props.keywords = "synthetic,test fixture,no patient data"
     props.comments = "Entirely fictional. Not for clinical use."
+    props.created = datetime(2026, 1, 1, tzinfo=UTC)
+    props.modified = datetime(2026, 1, 1, tzinfo=UTC)
     path.parent.mkdir(parents=True, exist_ok=True)
     doc.save(path)
+    normalized = path.with_suffix(".normalized.docx")
+    with zipfile.ZipFile(path) as source_zip, zipfile.ZipFile(normalized, "w") as target_zip:
+        for item in sorted(source_zip.infolist(), key=lambda value: value.filename):
+            info = zipfile.ZipInfo(item.filename, date_time=(2026, 1, 1, 0, 0, 0))
+            info.compress_type = zipfile.ZIP_DEFLATED
+            info.external_attr = item.external_attr
+            info.create_system = item.create_system
+            target_zip.writestr(info, source_zip.read(item.filename))
+    normalized.replace(path)
 
 
 def pdf_styles():

@@ -40,6 +40,10 @@ Extraction proposes evidence items with:
 
 The clinician corrects these fields and explicitly verifies useful evidence. Conflicting accounts are preserved and surfaced rather than silently reconciled. Low confidence indicates extraction uncertainty, not the strength or credibility of the clinical evidence.
 
+The domain must be one of `referral`, `strengths`, `developmental`, `medical`, `mental_health`, `family_social`, `education_work`, `inattention`, `hyperactivity_impulsivity`, `impairment`, `observations`, `differential`, `instrument`, `recommendation`, or `other`. The extraction prompt supplies a definition for every value and tells the model to choose the most specific applicable domain. `other` is reserved for relevant evidence that genuinely fits none of the defined clinical domains. Clinicians can correct the domain from each evidence card before verification.
+
+During drafting, paragraphs containing unknown evidence identifiers or no verified evidence link are blocked rather than causing the entire draft to be discarded. The only evidence-free paragraph allowed is an exact copy of the clinician-entered diagnostic conclusion in the summary. Each blocked paragraph adds a visible validation warning; its clinical text is not written to logs.
+
 ### 4. Verify instrument summaries
 
 The clinician enters or verifies the instrument name and version, respondent, supplied scale or index values, and clinical interpretation. The application does not reproduce proprietary questions, derive scores from raw responses, or treat thresholds as a diagnosis. Any discrepancy between a supplied export and a draft must be corrected before approval.

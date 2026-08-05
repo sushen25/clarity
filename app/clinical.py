@@ -5,29 +5,37 @@ from typing import Literal
 from pydantic import BaseModel, Field, field_validator
 
 
-DOMAINS = (
-    "referral", "strengths", "developmental", "medical", "mental_health",
-    "family_social", "education_work", "inattention", "hyperactivity_impulsivity",
-    "impairment", "observations", "differential", "instrument", "recommendation",
-)
+DOMAIN_DEFINITIONS = {
+    "referral": "Reason for referral, presenting concerns, goals, or questions for assessment.",
+    "strengths": "Strengths, interests, capabilities, protective factors, or helpful supports.",
+    "developmental": "Pregnancy, birth, milestones, childhood development, and early symptom history.",
+    "medical": "Physical health, medication, sleep, sensory issues, neurological history, or medical assessment.",
+    "mental_health": "Mood, anxiety, trauma, emotional wellbeing, risk, or previous mental-health care.",
+    "family_social": "Family relationships, friendships, social functioning, living situation, or family history.",
+    "education_work": "Educational or occupational history, performance, attendance, and task demands.",
+    "inattention": "ADHD inattention symptoms such as distractibility, forgetfulness, disorganisation, or poor sustained attention.",
+    "hyperactivity_impulsivity": "ADHD hyperactivity or impulsivity symptoms such as restlessness, interrupting, excessive talking, or difficulty waiting.",
+    "impairment": "Functional impact or clinically significant difficulty across home, school, work, relationships, or daily living.",
+    "observations": "Clinician's direct behavioural or mental-state observations during assessment.",
+    "differential": "Alternative explanations, co-occurring conditions, diagnostic uncertainty, or evidence against ADHD.",
+    "instrument": "Authorised rating-scale, interview, cognitive-test, or other assessment result and its interpretation.",
+    "recommendation": "A recommendation, intervention, accommodation, referral, or proposed next step.",
+    "other": "Relevant clinical evidence that genuinely does not fit any more specific domain.",
+}
+DOMAINS = tuple(DOMAIN_DEFINITIONS)
 SETTINGS = ("home", "school", "work", "social", "clinical", "other", "unspecified")
 CRITERIA = [f"A1.{i}" for i in range(1, 10)] + [f"A2.{i}" for i in range(1, 10)]
 OUTCOMES = ("unreviewed", "met", "not_met", "insufficient")
 
 
 class ExtractedEvidence(BaseModel):
-    domain: str
+    domain: Literal[*DOMAINS]
     source_location: str
     supporting_text: str = Field(min_length=1, max_length=800)
     reporter: str = ""
     setting: str = "unspecified"
     confidence: float = Field(ge=0, le=1)
     contradiction_status: Literal["none", "possible", "confirmed"] = "none"
-
-    @field_validator("domain")
-    @classmethod
-    def valid_domain(cls, value: str):
-        return value if value in DOMAINS else "other"
 
     @field_validator("setting")
     @classmethod
@@ -52,6 +60,7 @@ class DraftSection(BaseModel):
 
 class DraftResult(BaseModel):
     sections: list[DraftSection]
+    validation_warnings: list[str] = Field(default_factory=list, exclude=True)
 
 
 REPORT_SECTIONS = [

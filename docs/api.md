@@ -125,9 +125,11 @@ The server stores a SHA-256 hash and returns `202` with `source_id` and an `extr
 
 Accepted fields are `domain`, `source_location`, `supporting_text`, `reporter`, `setting`, `confidence`, `contradiction_status`, and `verified`.
 
+`domain` is validated against the clinical domain catalog returned as `evidence_domains` by `GET /api/cases/{case_id}`. Invalid values return `400 invalid_domain` with `allowed_domains`.
+
 ```json
 {
-  "domain": "functional_impairment",
+  "domain": "impairment",
   "source_location": "paragraph 12",
   "reporter": "patient",
   "setting": "work",

@@ -57,7 +57,7 @@ def process_draft(payload: dict, case_id: str) -> None:
     version = get_db().execute("SELECT COALESCE(MAX(version),0)+1 FROM report_drafts WHERE case_id=?", (case_id,)).fetchone()[0]
     draft_id = new_id()
     timestamp = now()
-    warnings = clinical_gaps(case, evidence, sources)
+    warnings = clinical_gaps(case, evidence, sources) + result.validation_warnings
     get_db().execute(
         "INSERT INTO report_drafts(id,case_id,version,sections_json,warnings_json,template_version,prompt_version,model_id,state,created_at,updated_at) VALUES(?,?,?,?,?,'reference-v1',?,?, 'draft',?,?)",
         (draft_id, case_id, version, json.dumps(result.model_dump()["sections"]), json.dumps(warnings),
@@ -113,7 +113,15 @@ def run_forever() -> None:
                 if job["job_type"] == "extract_source" and int(job["attempts"]) >= 3:
                     get_db().execute("UPDATE source_documents SET extraction_status='failed' WHERE id=?", (job["payload"].get("source_id"),))
                     get_db().commit()
-                fail(job, exc)
+                outcome = fail(job, exc)
+                current_app.logger.warning(
+                    "job.processing_failed job_type=%s status=%s attempt=%d error_code=%s",
+                    job["job_type"], outcome["status"], outcome["attempts"], outcome["error_code"],
+                )
+                audit(
+                    f"job.{outcome['status']}", None, job["case_id"], job["id"],
+                    {"job_type": job["job_type"], "attempt": outcome["attempts"], "error_code": outcome["error_code"]},
+                )
 
 
 if __name__ == "__main__":

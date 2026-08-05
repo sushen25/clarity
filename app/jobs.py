@@ -6,6 +6,26 @@ from datetime import UTC, datetime, timedelta
 from .db import get_db, new_id, now, row_dict
 
 
+def _is_transient(error: Exception) -> bool:
+    try:
+        from botocore.exceptions import (
+            ConnectTimeoutError,
+            ConnectionClosedError,
+            EndpointConnectionError,
+            ReadTimeoutError,
+        )
+        if isinstance(error, (ConnectTimeoutError, ConnectionClosedError, EndpointConnectionError, ReadTimeoutError)):
+            return True
+        response = getattr(error, "response", {}) or {}
+        code = (response.get("Error", {}) or {}).get("Code", "")
+        return code in {
+            "InternalServerException", "ModelNotReadyException", "ModelTimeoutException",
+            "ServiceUnavailableException", "ThrottlingException", "TooManyRequestsException",
+        }
+    except ImportError:
+        return isinstance(error, (ConnectionError, TimeoutError))
+
+
 def enqueue(job_type: str, case_id: str | None, payload: dict) -> dict:
     job_id = new_id()
     timestamp = now()
@@ -45,9 +65,10 @@ def complete(job_id: str) -> None:
     get_db().commit()
 
 
-def fail(job: dict, error: Exception) -> None:
+def fail(job: dict, error: Exception) -> dict:
     attempts = int(job["attempts"])
-    if attempts < 3:
+    error_code = getattr(error, "job_error_code", type(error).__name__)
+    if attempts < 3 and _is_transient(error):
         delay = 2 ** attempts * 10
         available = (datetime.now(UTC) + timedelta(seconds=delay)).isoformat()
         status = "queued"
@@ -56,6 +77,7 @@ def fail(job: dict, error: Exception) -> None:
         status = "failed"
     get_db().execute(
         "UPDATE jobs SET status=?,last_error=?,available_at=?,locked_at=NULL,updated_at=? WHERE id=?",
-        (status, type(error).__name__, available, now(), job["id"]),
+        (status, error_code, available, now(), job["id"]),
     )
     get_db().commit()
+    return {"status": status, "error_code": error_code, "attempts": attempts}

@@ -13,6 +13,7 @@ def _bool(name: str, default: bool) -> bool:
 
 
 class Config:
+    LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
     SECRET_KEY = os.getenv("SECRET_KEY", "development-only-change-me-please")
     DATABASE_PATH = os.getenv("DATABASE_PATH", "data/app.db")
     STORAGE_ROOT = os.getenv("STORAGE_ROOT", "storage")
@@ -28,7 +29,12 @@ class Config:
     BEDROCK_ENABLED = _bool("BEDROCK_ENABLED", False)
     AWS_REGION = os.getenv("AWS_REGION", "ap-southeast-2")
     BEDROCK_MODEL_ID = os.getenv("BEDROCK_MODEL_ID", "au.anthropic.claude-sonnet-4-6")
-    PROMPT_VERSION = os.getenv("PROMPT_VERSION", "2026-08-poc-v1")
+    BEDROCK_CONNECT_TIMEOUT_SECONDS = int(os.getenv("BEDROCK_CONNECT_TIMEOUT_SECONDS", "10"))
+    BEDROCK_READ_TIMEOUT_SECONDS = int(os.getenv("BEDROCK_READ_TIMEOUT_SECONDS", "600"))
+    BEDROCK_SDK_MAX_ATTEMPTS = int(os.getenv("BEDROCK_SDK_MAX_ATTEMPTS", "2"))
+    BEDROCK_EXTRACTION_MAX_TOKENS = int(os.getenv("BEDROCK_EXTRACTION_MAX_TOKENS", "8000"))
+    BEDROCK_DRAFT_MAX_TOKENS = int(os.getenv("BEDROCK_DRAFT_MAX_TOKENS", "7000"))
+    PROMPT_VERSION = os.getenv("PROMPT_VERSION", "2026-08-poc-v2")
     REPORT_TEMPLATE = os.getenv("REPORT_TEMPLATE", "templates/adhd_report_template.docx")
     LIBREOFFICE_BIN = os.getenv("LIBREOFFICE_BIN", "soffice")
     PUBLIC_ORIGIN = os.getenv("PUBLIC_ORIGIN", "https://localhost")
