@@ -13,6 +13,8 @@ Do not place patient information, real transcripts, credentials, or identifiable
 | [API](api.md) | Authentication, request conventions, endpoints, and example payloads |
 | [Data model](data-model.md) | SQLite entities, lifecycle states, filesystem layout, and versioning |
 | [Deployment](deployment.md) | Local setup, Bedrock configuration, Raspberry Pi deployment, TLS, and verification |
+| [Raspberry Pi deployment runbook](raspberry-pi-deployment.md) | Full hardware-to-production walkthrough for encrypted storage, Docker, AWS, HTTPS, backups, boot, and verification |
+| [AWS Bedrock connection](aws-bedrock-connection.md) | End-to-end model access, IAM, credentials, local/Pi configuration, testing, monitoring, and troubleshooting |
 | [Operations](operations.md) | Health checks, jobs, backups, restoration, upgrades, and incident response |
 | [Development and testing](development.md) | Repository layout, coding conventions, test commands, and extension points |
 | [Privacy and threat checklist](privacy-and-threat-checklist.md) | Required privacy, security, and clinical checks before live use |

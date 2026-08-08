@@ -16,15 +16,17 @@
 - Normal: Arial Narrow 10 pt, dark slate, 1.08 line spacing, 3 pt after.
 - Title: Arial Narrow 15 pt, bold, centered, dark slate, 10 pt after.
 - Heading 1: Arial Narrow 10.5 pt, bold, uppercase, dark slate, kept with the following teal rule.
-- Evidence Citation: Arial Narrow 7.5 pt, italic, muted blue-grey, 8 pt after.
 - Tables: 6.6-inch content width, narrative columns sized to content, light teal header fill where applicable, no fixed row heights.
+- Diagnostic criteria: deterministic A1 and A2 tables on a new page, with a wide criterion column, compact clinician-outcome column, repeating teal headers, non-splitting rows, and explicit `Met`, `Not met`, `Insufficient evidence`, or `Not reviewed` states. Only clinician-set criterion outcomes are rendered; the model does not control this table.
 - Header: generic `CLINICAL PSYCHOLOGY` / `ADHD ASSESSMENT` text and teal rule; no copied practice logo or patient-bearing artwork. A paragraph-based header is used so LibreOffice repeats it reliably on overflow pages.
 - Footer: confidentiality notice and PAGE field.
+- Page-style compatibility: the generator mirrors the default header and footer into explicit even-page and first-page parts so LibreOffice and Word render identical page furniture throughout the report.
 
 ## Content flow and slots
 
 - Title and metadata slots: initials, cohort, assessment dates, instruments, clinician.
-- Ordered repeatable section slot: heading plus zero or more evidence-linked paragraphs.
+- Ordered repeatable section slot: heading plus zero or more clinically supported paragraphs. The model synthesises verified evidence into the prose using natural reporter and setting attribution; evidence identifiers, filenames, and source locations remain internal and are not printed in the final report.
+- Diagnostic-criteria slot: all 18 criterion labels and clinician outcomes rendered independently of model-authored prose.
 - Empty sections use an explicit “not supplied or not yet verified” message.
 - Final review record: clinician, registration, draft version, model, prompt version, and approval state.
 - Optional profile charts remain source attachments in the POC and are not embedded automatically.

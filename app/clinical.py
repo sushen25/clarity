@@ -24,7 +24,27 @@ DOMAIN_DEFINITIONS = {
 }
 DOMAINS = tuple(DOMAIN_DEFINITIONS)
 SETTINGS = ("home", "school", "work", "social", "clinical", "other", "unspecified")
-CRITERIA = [f"A1.{i}" for i in range(1, 10)] + [f"A2.{i}" for i in range(1, 10)]
+CRITERIA_LABELS = {
+    "A1.1": "Careless mistakes / attention to detail",
+    "A1.2": "Difficulty sustaining attention",
+    "A1.3": "Does not seem to listen",
+    "A1.4": "Does not follow through",
+    "A1.5": "Difficulty organising",
+    "A1.6": "Avoids sustained mental effort",
+    "A1.7": "Loses necessary items",
+    "A1.8": "Easily distracted",
+    "A1.9": "Forgetful in daily activities",
+    "A2.1": "Fidgets or squirms",
+    "A2.2": "Leaves seat when remaining seated is expected",
+    "A2.3": "Restlessness / inappropriate activity",
+    "A2.4": "Difficulty engaging quietly",
+    "A2.5": "Often on the go",
+    "A2.6": "Talks excessively",
+    "A2.7": "Blurts out answers",
+    "A2.8": "Difficulty waiting",
+    "A2.9": "Interrupts or intrudes",
+}
+CRITERIA = list(CRITERIA_LABELS)
 OUTCOMES = ("unreviewed", "met", "not_met", "insufficient")
 
 

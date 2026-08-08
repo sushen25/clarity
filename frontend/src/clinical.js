@@ -10,3 +10,14 @@ export const criteriaLabels = {
 
 export const criterionIds = Object.keys(criteriaLabels);
 
+export const criteriaGroups = [
+  { prefix: "A1.", title: "A1. Inattention Criteria" },
+  { prefix: "A2.", title: "A2. Hyperactivity / Impulsivity Criteria" },
+];
+
+export const criterionOutcomeLabels = {
+  met: "Met",
+  not_met: "Not met",
+  insufficient: "Insufficient evidence",
+  unreviewed: "Not reviewed",
+};

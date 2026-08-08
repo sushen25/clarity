@@ -34,7 +34,7 @@ class Config:
     BEDROCK_SDK_MAX_ATTEMPTS = int(os.getenv("BEDROCK_SDK_MAX_ATTEMPTS", "2"))
     BEDROCK_EXTRACTION_MAX_TOKENS = int(os.getenv("BEDROCK_EXTRACTION_MAX_TOKENS", "8000"))
     BEDROCK_DRAFT_MAX_TOKENS = int(os.getenv("BEDROCK_DRAFT_MAX_TOKENS", "7000"))
-    PROMPT_VERSION = os.getenv("PROMPT_VERSION", "2026-08-poc-v2")
+    PROMPT_VERSION = os.getenv("PROMPT_VERSION", "2026-08-poc-v4")
     REPORT_TEMPLATE = os.getenv("REPORT_TEMPLATE", "templates/adhd_report_template.docx")
     LIBREOFFICE_BIN = os.getenv("LIBREOFFICE_BIN", "soffice")
     PUBLIC_ORIGIN = os.getenv("PUBLIC_ORIGIN", "https://localhost")

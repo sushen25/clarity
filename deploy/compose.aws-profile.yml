@@ -1,0 +1,10 @@
+services:
+  worker:
+    environment:
+      AWS_PROFILE: ${AWS_PROFILE:-clarity-bedrock}
+      AWS_SDK_LOAD_CONFIG: "1"
+    volumes:
+      - type: bind
+        source: ${AWS_CONFIG_DIR:?Set AWS_CONFIG_DIR to the protected host AWS configuration directory}
+        target: /home/app/.aws
+        read_only: true

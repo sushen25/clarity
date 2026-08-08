@@ -5,7 +5,7 @@ import logging
 import boto3
 
 from app.ai import BedrockClinicalAI, LocalHeuristicAI, get_ai
-from app.clinical import DOMAINS, DOMAIN_DEFINITIONS, ExtractionResult
+from app.clinical import DOMAINS, DOMAIN_DEFINITIONS, ExtractionResult, REPORT_SECTIONS
 
 
 class _FakeBedrockClient:
@@ -112,8 +112,20 @@ def test_draft_blocks_paragraphs_without_valid_evidence_links(app, monkeypatch):
             [],
         )
 
-    assert [p.text for p in result.sections[0].paragraphs] == ["Supported paragraph."]
-    assert [p.text for p in result.sections[1].paragraphs] == ["Clinician conclusion."]
+    system_prompt = client.last_request["system"][0]["text"]
+    assert "interweaves the evidence throughout" in system_prompt
+    assert "attribute information naturally to its reporter" in system_prompt
+    assert "synthesise corroborating evidence from multiple reporters or settings" in system_prompt
+    assert "preserve meaningful differences or contradictions" in system_prompt
+    assert "must not contain evidence UUIDs, source filenames, source locations" in system_prompt
+    assert "evidence_ids are output metadata only" in system_prompt
+    assert "If no verified evidence supports a section" in system_prompt
+    assert "For the diagnostic_criteria section, return paragraphs: []" in system_prompt
+    sections = {section.key: section for section in result.sections}
+    assert [section.key for section in result.sections] == [key for key, _heading in REPORT_SECTIONS]
+    assert [p.text for p in sections["background"].paragraphs] == ["Supported paragraph."]
+    assert sections["diagnostic_criteria"].paragraphs == []
+    assert [p.text for p in sections["summary"].paragraphs] == ["Clinician conclusion."]
     assert result.validation_warnings == [
         "1 model paragraph(s) with invalid evidence links were blocked.",
         "1 unsupported model paragraph(s) were blocked.",

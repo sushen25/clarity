@@ -73,13 +73,16 @@ def _generate_files(draft_id: str) -> None:
     draft = row_dict(get_db().execute("SELECT * FROM report_drafts WHERE id=?", (draft_id,)).fetchone())
     case = _case(draft["case_id"])
     clinician = row_dict(get_db().execute("SELECT * FROM users WHERE id=?", (case["assigned_user_id"],)).fetchone())
-    evidence = [row_dict(row) for row in get_db().execute(
-        "SELECT e.*,s.original_filename FROM evidence_items e JOIN source_documents s ON s.id=e.source_id WHERE e.case_id=?", (case["id"],)
+    criteria = [row_dict(row) for row in get_db().execute(
+        "SELECT * FROM criterion_assessments WHERE case_id=? ORDER BY criterion_id", (case["id"],)
     )]
     root = Path(current_app.config["STORAGE_ROOT"])
     docx_rel = Path("reports") / case["id"] / f"report-v{draft['version']}.docx"
     pdf_dir = root / "previews" / case["id"] / f"v{draft['version']}"
-    generate_docx(Path(current_app.config["REPORT_TEMPLATE"]), root / docx_rel, case, draft, clinician, {x["id"]: x for x in evidence})
+    generate_docx(
+        Path(current_app.config["REPORT_TEMPLATE"]), root / docx_rel, case, draft,
+        clinician, criteria,
+    )
     preview = render_preview(root / docx_rel, pdf_dir, current_app.config["LIBREOFFICE_BIN"])
     preview_rel = str(preview.relative_to(root)) if preview else None
     get_db().execute("UPDATE report_drafts SET docx_path=?,preview_path=?,updated_at=? WHERE id=?",

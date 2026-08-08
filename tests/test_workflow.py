@@ -5,6 +5,8 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+from docx import Document
+
 from app.db import get_db
 from app.jobs import claim_next_job, complete
 from app.jobs import enqueue
@@ -92,6 +94,10 @@ def test_complete_clinician_workflow(app, authenticated, sample_txt):
         assert download.status_code == 200
         assert download.data.startswith(b"PK")
         assert "attachment" in download.headers["Content-Disposition"]
+        generated = Document(io.BytesIO(download.data))
+        criteria_tables = [table for table in generated.tables if table.rows and table.cell(0, 0).text.startswith(("A1.", "A2."))]
+        assert len(criteria_tables) == 2
+        assert all(row.cells[1].text == "Not met" for table in criteria_tables for row in table.rows[1:])
 
         latest = client.get(f"/api/cases/{case_id}").json["drafts"][0]
         if latest["preview_path"]:

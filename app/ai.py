@@ -18,6 +18,24 @@ from .clinical import (
 )
 
 
+DRAFTING_INSTRUCTIONS = """Draft an Australian clinician ADHD assessment report using only the supplied verified evidence, verified instrument summaries, and clinician decisions.
+
+Write cohesive clinical prose that interweaves the evidence throughout the relevant report sections. Do not simply copy evidence passages, produce an evidence list, or discuss each source in isolation. Instead:
+- attribute information naturally to its reporter or evidence type, for example the patient, parent/carer, teacher, clinician observation, or assessment instrument;
+- integrate concrete examples, timeframe, frequency, setting, and functional impact when those details are supplied;
+- synthesise corroborating evidence from multiple reporters or settings in the same narrative where clinically appropriate;
+- preserve meaningful differences or contradictions between reporters rather than silently reconciling them;
+- distinguish reported history from direct clinical observation and verified instrument results;
+- use appropriately cautious language when evidence is incomplete, uncertain, or limited to one setting; and
+- avoid repetitive statements across sections.
+
+The final report text must not contain evidence UUIDs, source filenames, source locations, an 'Evidence:' label, citation blocks, or technical discussion of the evidence ledger. evidence_ids are output metadata only: every factual paragraph must list one or more IDs copied exactly from verified_evidence. Before returning JSON, check every paragraph against this rule. If no verified evidence supports a section, return that section with paragraphs: [] instead of adding introductory, transition, boilerplate, generic clinical, or recommendation text. Never return an empty evidence_ids list except for the exact clinician-entered conclusion described below.
+
+The application renders the clinician's criterion decisions as a deterministic table. For the diagnostic_criteria section, return paragraphs: [] and do not narrate or restate the table.
+
+Never calculate or invent a score, decide a diagnostic criterion, add a fact, convert an allegation into fact, or state a diagnosis beyond final_diagnostic_conclusion. If final_diagnostic_conclusion is supplied, reproduce it exactly once in the summary without paraphrasing; that exact clinician-entered paragraph may have an empty evidence_ids list. Use clinician criteria exactly as supplied. Describe instrument results only from verified scores and interpretations. Recommendations must be grounded in supplied verified information and framed for clinician review; omit recommendations when no verified evidence supports them. Return JSON only matching this schema: """
+
+
 class ClinicalAI(ABC):
     @abstractmethod
     def extract(self, text: str, source: dict, cohort: str) -> ExtractionResult: ...
@@ -194,12 +212,23 @@ class BedrockClinicalAI(ClinicalAI):
                    "required_sections": REPORT_SECTIONS}
         result = self._json(
             "draft",
-            "Draft an Australian clinician ADHD assessment report. Use only supplied verified evidence and clinician decisions. "
-            "Never calculate a score, decide a criterion, invent a fact, or state a diagnosis beyond final_diagnostic_conclusion. "
-            "Each factual paragraph must list supporting evidence_ids. Return JSON only matching this schema: " +
+            DRAFTING_INSTRUCTIONS +
             json.dumps(DraftResult.model_json_schema(), separators=(",", ":")), json.dumps(payload))
         draft = DraftResult.model_validate(result)
         draft.validation_warnings = []
+        supplied_sections = {}
+        allowed_section_keys = {key for key, _heading in REPORT_SECTIONS}
+        for section in draft.sections:
+            if section.key in allowed_section_keys and section.key not in supplied_sections:
+                supplied_sections[section.key] = section
+        draft.sections = [
+            DraftSection(
+                key=key,
+                heading=heading,
+                paragraphs=supplied_sections[key].paragraphs if key in supplied_sections else [],
+            )
+            for key, heading in REPORT_SECTIONS
+        ]
         blocked_unknown_links = 0
         blocked_unsupported = 0
         clinician_conclusion = " ".join(str(case.get("final_diagnostic_conclusion", "")).split())

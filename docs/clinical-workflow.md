@@ -52,6 +52,8 @@ The clinician enters or verifies the instrument name and version, respondent, su
 
 All 18 ADHD criteria are presented for clinician review. The model may propose linked evidence and draft explanatory text, but the clinician sets the outcome and notes for every criterion. Evidence links retain reporter, setting, and impairment context.
 
+The Report review screen and generated DOCX include deterministic A1 and A2 criteria tables. Each row reports the clinician-set outcome as `Met`, `Not met`, `Insufficient evidence`, or `Not reviewed`; the model cannot add, remove, or change a criterion-table decision. Regenerating or rendering a draft refreshes the DOCX table from the current criterion assessments.
+
 The final diagnostic conclusion is a separate clinician-entered decision. It may be positive, negative, provisional, or another clinically appropriate conclusion represented by the available schema; it is never inferred solely from a criterion count or rating scale.
 
 ### 6. Resolve completeness warnings
@@ -86,9 +88,9 @@ The current report template maps reviewed material into:
 9. recommendations grounded in verified information; and
 10. a clinical review record containing draft provenance and approval state.
 
-Strengths and protective factors are currently incorporated into background information. Evidence source notes are printed immediately after linked paragraphs rather than in a separate appendix. Authorised profile-chart appendices remain a planned extension and are not automatically embedded by the POC.
+Strengths and protective factors are currently incorporated into background information. The drafting prompt requires verified evidence to be interwoven into cohesive clinical prose, with natural attribution to the patient, collateral reporters, clinician observations, or instruments and with supplied examples, settings, functional impacts, uncertainties, and contradictions retained. Evidence identifiers, filenames, and source locations remain available inside the review workflow but are not printed in the final DOCX. Authorised profile-chart appendices remain a planned extension and are not automatically embedded by the POC.
 
-Each generated paragraph retains internal evidence identifiers. Claims without verified support are blocked or visibly flagged. Recommendations must be framed for clinician review and grounded in the case record; the model cannot invent medication instructions, referrals, scores, history, or risk statements.
+Each generated paragraph retains internal evidence identifiers. The prompt requires unsupported sections to remain empty instead of adding generic or transitional prose; any claims still returned without verified support are blocked and visibly flagged. Recommendations must be framed for clinician review and grounded in the case record; the model cannot invent medication instructions, referrals, scores, history, or risk statements.
 
 ### 8. Approve and export
 

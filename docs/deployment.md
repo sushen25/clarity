@@ -21,7 +21,7 @@ Copy `.env.example` to `.env`; `.env` is excluded from source control. Productio
 | `BEDROCK_SDK_MAX_ATTEMPTS` | `2` | Total initial and retry HTTP attempts made by the AWS SDK |
 | `BEDROCK_EXTRACTION_MAX_TOKENS` | `8000` | Maximum model output for an extraction request |
 | `BEDROCK_DRAFT_MAX_TOKENS` | `7000` | Maximum model output for a report-drafting request |
-| `PROMPT_VERSION` | `2026-08-poc-v2` | Version recorded with generated drafts |
+| `PROMPT_VERSION` | `2026-08-poc-v4` | Version recorded with generated drafts |
 | `REPORT_TEMPLATE` | `templates/adhd_report_template.docx` | De-identified template; Compose overrides it with the container path |
 | `LIBREOFFICE_BIN` | `soffice` | Headless preview converter executable |
 | `MAX_UPLOAD_MB` | `25` | Whole-request upload limit in MB |
@@ -57,6 +57,8 @@ The example file is deliberately configured for local HTTP. Set `COOKIE_SECURE=t
 
 ## Bedrock enablement
 
+For complete console, IAM policy, named-profile, Docker/Raspberry Pi, synthetic-test, monitoring, credential-rotation, and troubleshooting instructions, follow [Connecting Clarity to Amazon Bedrock](aws-bedrock-connection.md). The checklist below is the abbreviated deployment gate.
+
 Before enabling Bedrock:
 
 1. Confirm access to the Australian geographic inference profile in the chosen AWS account.
@@ -90,6 +92,8 @@ Only transient network, timeout, throttling, model-not-ready, and Bedrock servic
 
 ## Raspberry Pi deployment
 
+For the complete, copyable installation procedure—from Raspberry Pi OS and encrypted SSD preparation through Docker, AWS credentials, DNS/TLS, backups, reboots, and acceptance testing—use the [Raspberry Pi deployment runbook](raspberry-pi-deployment.md). The notes below are only a summary.
+
 ### Host preparation
 
 - Raspberry Pi 5 with at least 8 GB RAM, 64-bit Raspberry Pi OS, active cooling, and a UPS.
@@ -104,11 +108,11 @@ Place the repository on the encrypted volume or ensure that every writable bind 
 
 ```sh
 cp .env.example .env
-# Edit SECRET_KEY, PUBLIC_DOMAIN, PUBLIC_ORIGIN, and set COOKIE_SECURE=true.
-docker compose build
-docker compose run --rm web python manage.py create-admin --username admin --full-name "Clinical Administrator"
-docker compose up -d
-docker compose ps
+# Edit SECRET_KEY, PUBLIC_DOMAIN, PUBLIC_ORIGIN, AWS_CONFIG_DIR, enable Bedrock, and set COOKIE_SECURE=true.
+docker compose -f docker-compose.yml -f deploy/compose.aws-profile.yml build
+docker compose -f docker-compose.yml -f deploy/compose.aws-profile.yml run --rm web python manage.py create-admin --username admin --full-name "Clinical Administrator"
+docker compose -f docker-compose.yml -f deploy/compose.aws-profile.yml up -d
+docker compose -f docker-compose.yml -f deploy/compose.aws-profile.yml ps
 ```
 
 The image builds the React frontend, installs the Python application and LibreOffice Writer, and runs Gunicorn with two workers and two threads. A separate container runs the single background worker. Both containers mount the same database and storage directories.
