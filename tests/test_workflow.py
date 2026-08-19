@@ -55,6 +55,29 @@ def test_complete_clinician_workflow(app, authenticated, sample_txt):
     )
     assert corrected_domain.status_code == 200
     assert corrected_domain.json["domain"] == "inattention"
+    edited_evidence = client.patch(
+        f"/api/cases/{case_id}/evidence/{detail['evidence'][0]['id']}",
+        headers=headers,
+        json={
+            "supporting_text": "Clinician-corrected supporting evidence.",
+            "reporter": "clinician",
+            "setting": "clinical",
+            "source_location": "page 2",
+            "confidence": 0.75,
+            "contradiction_status": "possible",
+        },
+    )
+    assert edited_evidence.status_code == 200
+    assert edited_evidence.json["supporting_text"] == "Clinician-corrected supporting evidence."
+    assert edited_evidence.json["confidence"] == 0.75
+    assert edited_evidence.json["contradiction_status"] == "possible"
+    invalid_confidence = client.patch(
+        f"/api/cases/{case_id}/evidence/{detail['evidence'][0]['id']}",
+        headers=headers,
+        json={"confidence": 1.1},
+    )
+    assert invalid_confidence.status_code == 400
+    assert invalid_confidence.json["error"] == "invalid_confidence"
     for item in detail["evidence"]:
         result = client.patch(f"/api/cases/{case_id}/evidence/{item['id']}", headers=headers, json={"verified": True})
         assert result.status_code == 200

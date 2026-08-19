@@ -175,6 +175,21 @@ def update_evidence(case_id: str, evidence_id: str):
     allowed = {"domain", "source_location", "supporting_text", "reporter", "setting", "confidence", "contradiction_status", "verified"}
     if "domain" in body and body["domain"] not in DOMAINS:
         return jsonify({"error": "invalid_domain", "allowed_domains": list(DOMAINS)}), 400
+    if "supporting_text" in body:
+        supporting_text = str(body["supporting_text"]).strip()
+        if not supporting_text or len(supporting_text) > 800:
+            return jsonify({"error": "invalid_supporting_text"}), 400
+        body["supporting_text"] = supporting_text
+    if "confidence" in body:
+        try:
+            confidence = float(body["confidence"])
+        except (TypeError, ValueError):
+            return jsonify({"error": "invalid_confidence"}), 400
+        if not 0 <= confidence <= 1:
+            return jsonify({"error": "invalid_confidence"}), 400
+        body["confidence"] = confidence
+    if "contradiction_status" in body and body["contradiction_status"] not in {"none", "possible", "confirmed"}:
+        return jsonify({"error": "invalid_contradiction_status"}), 400
     fields, values = [], []
     for key in allowed:
         if key in body:
