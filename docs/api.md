@@ -47,6 +47,8 @@ Requires CSRF and clears the session. Returns `204`.
 
 ### `POST /auth/users`
 
+Administrators can call this endpoint directly or use the interactive `scripts/create_user.sh` helper documented in [Operations](operations.md). The helper keeps passwords out of command-line arguments and handles login cookies and the CSRF token.
+
 Administrator only. There is no public registration or email reset.
 
 ```json

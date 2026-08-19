@@ -6,6 +6,28 @@ The procedure deliberately keeps application data, AWS credentials, and backups 
 
 > **Live-data gate:** the current application is a proof of concept. Use synthetic or fully de-identified cases until TOTP MFA, the privacy impact assessment, threat assessment, restoration rehearsal, and clinical validation gates are complete.
 
+## Deployment variables and the current Pi layout
+
+This guide uses two paths. Set them once for the rest of the commands:
+
+```sh
+APP_DIR=/home/sushen/clarity/clarity
+AWS_CONFIG_DIR=/home/sushen/clarity/secrets/aws
+```
+
+`APP_DIR` must be the directory containing `docker-compose.yml`; for the currently deployed Pi this is `/home/sushen/clarity/clarity`. Docker binds its `data` and `storage` directories directly from this location.
+
+For a production-grade installation, mount the encrypted SSD at `/srv/clarity` and use:
+
+```sh
+APP_DIR=/srv/clarity/app
+AWS_CONFIG_DIR=/srv/clarity/secrets/aws
+```
+
+If `/home/sushen/clarity` is on the Raspberry Pi's ordinary system disk, it is **not an encrypted clinical-data location**. It is suitable only for the current synthetic/de-identified POC deployment. Do not treat it as a substitute for the encrypted-volume layout below.
+
+The commands use `$APP_DIR` after defining it. If a new SSH session is opened, define the two variables again or substitute the full path.
+
 ## 1. Required hardware and external services
 
 - Raspberry Pi 5 with at least 8 GB RAM
@@ -129,33 +151,45 @@ sudo systemctl start docker
 
 Never start Docker when `findmnt /srv/clarity` fails. The UPS reduces unplanned shutdowns but does not replace this control.
 
-## 5. Install the application on the encrypted SSD
+## 5. Install the application
 
-Clone the repository into the mounted encrypted volume:
+For an encrypted production installation, clone the repository into the mounted encrypted volume:
 
 ```sh
 sudo install -d -m 750 -o <pi-admin> -g <pi-admin> /srv/clarity/app
 git clone https://github.com/sushen25/clarity.git /srv/clarity/app
-cd /srv/clarity/app
+APP_DIR=/srv/clarity/app
+AWS_CONFIG_DIR=/srv/clarity/secrets/aws
+cd "$APP_DIR"
 ```
+
+For the current Pi layout, the repository is already at `/home/sushen/clarity/clarity`; use the variables in the first section and skip the clone step unless deploying a fresh copy.
 
 For a private repository, use a read-only GitHub deploy key instead of embedding a token in a command or URL. Do not copy the development `.env`, database, uploads, reports, or AWS credentials from another computer.
 
 The application containers run as UID/GID `10001`. Create their writable directories with restricted ownership:
 
 ```sh
-sudo install -d -m 700 -o 10001 -g 10001 /srv/clarity/app/data
-sudo install -d -m 700 -o 10001 -g 10001 /srv/clarity/app/storage
-sudo install -d -m 700 -o 10001 -g 10001 /srv/clarity/secrets/aws
+sudo install -d -m 700 -o 10001 -g 10001 "$APP_DIR/data"
+sudo install -d -m 700 -o 10001 -g 10001 "$APP_DIR/storage"
+sudo install -d -m 700 -o 10001 -g 10001 "$AWS_CONFIG_DIR"
+```
+
+If the database creation fails with `sqlite3.OperationalError: unable to open database file`, verify and repair these two directories:
+
+```sh
+sudo stat -c '%A %u:%g %n' "$APP_DIR/data" "$APP_DIR/storage"
+sudo chown -R 10001:10001 "$APP_DIR/data" "$APP_DIR/storage"
+sudo chmod 700 "$APP_DIR/data" "$APP_DIR/storage"
 ```
 
 ## 6. Configure the unattended AWS runtime identity
 
 Complete the IAM and model-access steps in [Connecting Clarity to Amazon Bedrock](aws-bedrock-connection.md). The container runtime must use a dedicated, least-privilege, unattended identity. Do not mount a profile that depends on `aws login`, SSO browser interaction, or `credential_process`; the application image does not include the AWS CLI or an interactive login cache.
 
-Place only the restricted runtime profile in `/srv/clarity/secrets/aws`. Create these files using `sudoedit` or securely copy them from a trusted administrator machine. Their shapes are:
+Place only the restricted runtime profile in `$AWS_CONFIG_DIR`. Create these files using `sudoedit` or securely copy them from a trusted administrator machine. Their shapes are:
 
-`/srv/clarity/secrets/aws/config`:
+`$AWS_CONFIG_DIR/config`:
 
 ```ini
 [profile clarity-bedrock]
@@ -163,7 +197,7 @@ region = ap-southeast-2
 output = json
 ```
 
-`/srv/clarity/secrets/aws/credentials`:
+`$AWS_CONFIG_DIR/credentials`:
 
 ```ini
 [clarity-bedrock]
@@ -174,8 +208,8 @@ aws_secret_access_key = <restricted-runtime-secret-access-key>
 Apply the permissions required by the worker container:
 
 ```sh
-sudo chown 10001:10001 /srv/clarity/secrets/aws/config /srv/clarity/secrets/aws/credentials
-sudo chmod 600 /srv/clarity/secrets/aws/config /srv/clarity/secrets/aws/credentials
+sudo chown 10001:10001 "$AWS_CONFIG_DIR/config" "$AWS_CONFIG_DIR/credentials"
+sudo chmod 600 "$AWS_CONFIG_DIR/config" "$AWS_CONFIG_DIR/credentials"
 ```
 
 Never print the credentials, commit them, put them in `.env`, or include them in a backup that lacks equivalent encryption and access controls.
@@ -185,7 +219,7 @@ Never print the credentials, commit them, put them in `.env`, or include them in
 Create the application environment file:
 
 ```sh
-cd /srv/clarity/app
+cd "$APP_DIR"
 cp .env.example .env
 chmod 600 .env
 openssl rand -hex 32
@@ -202,7 +236,7 @@ PUBLIC_ORIGIN=https://reports.example.com
 
 BEDROCK_ENABLED=true
 AWS_PROFILE=clarity-bedrock
-AWS_CONFIG_DIR=/srv/clarity/secrets/aws
+AWS_CONFIG_DIR=<the exact AWS_CONFIG_DIR value above>
 AWS_REGION=ap-southeast-2
 BEDROCK_MODEL_ID=au.anthropic.claude-sonnet-4-6
 BEDROCK_CONNECT_TIMEOUT_SECONDS=10
@@ -227,19 +261,40 @@ The supplied Caddy configuration uses the TLS-ALPN challenge on TCP 443, so port
 
 Docker-published ports have special firewall behaviour. Enforce the public exposure boundary primarily at the router and, if host filtering is added, use Docker's documented `DOCKER-USER` chain rather than assuming a simple UFW rule protects a published container port.
 
+### DNS and router checklist
+
+Before starting Caddy, complete these checks:
+
+```sh
+# On the Pi: confirm the reserved LAN address used as the forwarding target.
+hostname -I
+
+# From any computer: discover the public IPv4 address that the A record must target.
+curl -4 https://api.ipify.org
+echo
+
+# After creating the DNS record: confirm public DNS resolves to that address.
+dig +short A reports.example.com
+dig +short AAAA reports.example.com
+```
+
+Create a DNS-only `A` record such as `reports.example.com` pointing to the public IPv4 address. Do not add an `AAAA` record unless IPv6 routing and forwarding have been deliberately configured. Configure the router with `TCP 443` external to `TCP 443` on the Pi's reserved LAN address. `UDP 443` is optional.
+
+If the router's WAN address differs from the public IP above, or is in `100.64.0.0/10`, `10.0.0.0/8`, `172.16.0.0/12`, or `192.168.0.0/16`, normal inbound forwarding will not work until the upstream NAT or ISP/carrier-grade NAT problem is resolved.
+
 ## 9. Validate configuration, build, and create the administrator
 
 Always supply both Compose files so the worker receives the protected AWS profile:
 
 ```sh
-cd /srv/clarity/app
+cd "$APP_DIR"
 sudo docker compose -f docker-compose.yml -f deploy/compose.aws-profile.yml config
 sudo docker compose -f docker-compose.yml -f deploy/compose.aws-profile.yml build
 sudo docker compose -f docker-compose.yml -f deploy/compose.aws-profile.yml run --rm web \
   python manage.py create-admin --username admin --full-name "Clinical Administrator"
 ```
 
-Review the rendered Compose configuration carefully. It must show `/srv/clarity/secrets/aws` mounted read-only at `/home/app/.aws` in the worker. It must not print AWS secret values because those values are not part of `.env`.
+Review the rendered Compose configuration carefully. It must show the exact `$AWS_CONFIG_DIR` host directory mounted read-only at `/home/app/.aws` in the worker. It must not print AWS secret values because those values are not part of `.env`.
 
 Use a unique strong administrator password. There is no public registration or email password reset.
 
@@ -291,7 +346,7 @@ Do not enable Boto3/Botocore wire debug logs or Bedrock model invocation logging
 Use a physically or logically separate encrypted destination; a directory on the application SSD is not a disaster-recovery backup. After mounting the approved backup volume at `/mnt/clarity-backup`, run:
 
 ```sh
-cd /srv/clarity/app
+cd "$APP_DIR"
 findmnt /mnt/clarity-backup
 sudo python3 scripts/backup.py \
   --database data/app.db \
@@ -312,7 +367,7 @@ sudo cryptsetup open /dev/<exact-ssd-partition> clarity-data
 sudo mount /dev/mapper/clarity-data /srv/clarity
 findmnt /srv/clarity
 sudo systemctl start docker
-cd /srv/clarity/app
+cd "$APP_DIR"
 sudo docker compose -f docker-compose.yml -f deploy/compose.aws-profile.yml up -d
 sudo docker compose -f docker-compose.yml -f deploy/compose.aws-profile.yml ps
 ```
@@ -320,7 +375,7 @@ sudo docker compose -f docker-compose.yml -f deploy/compose.aws-profile.yml ps
 ### Before a planned shutdown
 
 ```sh
-cd /srv/clarity/app
+cd "$APP_DIR"
 sudo docker compose -f docker-compose.yml -f deploy/compose.aws-profile.yml stop
 sudo systemctl stop docker docker.socket
 sudo umount /srv/clarity
@@ -337,7 +392,7 @@ Wait for the Pi to power down before disconnecting power or storage.
 3. Update and rebuild in a maintenance window:
 
 ```sh
-cd /srv/clarity/app
+cd "$APP_DIR"
 git pull --ff-only
 sudo docker compose -f docker-compose.yml -f deploy/compose.aws-profile.yml build
 sudo docker compose -f docker-compose.yml -f deploy/compose.aws-profile.yml up -d
@@ -348,7 +403,59 @@ sudo docker compose -f docker-compose.yml -f deploy/compose.aws-profile.yml ps
 
 Prompt, model, schema, and template changes require representative clinical and rendering validation, not only an infrastructure smoke test.
 
-## 13. Final pre-live checklist
+## 13. Routine commands and troubleshooting
+
+Run all Compose commands from `$APP_DIR` and include both Compose files. Use these commands for routine diagnosis; none print AWS credentials or case content.
+
+```sh
+cd "$APP_DIR"
+
+# Service state and the most recent privacy-filtered logs.
+sudo docker compose -f docker-compose.yml -f deploy/compose.aws-profile.yml ps
+sudo docker compose -f docker-compose.yml -f deploy/compose.aws-profile.yml logs --tail=100 web worker caddy
+
+# Follow Bedrock/job lifecycle records while running a synthetic test.
+sudo docker compose -f docker-compose.yml -f deploy/compose.aws-profile.yml logs -f worker
+
+# Confirm Caddy owns HTTPS and inspect certificate/startup errors.
+sudo ss -ltnp 'sport = :443'
+sudo docker compose -f docker-compose.yml -f deploy/compose.aws-profile.yml logs --tail=100 caddy
+
+# Check container-local health and public HTTPS health. Port 8000 is deliberately
+# not published on the Pi host, so do not curl it directly from the host.
+sudo docker compose -f docker-compose.yml -f deploy/compose.aws-profile.yml exec web \
+  python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/api/health').read().decode())"
+curl --fail --show-error https://reports.example.com/api/health
+```
+
+| Symptom | Check and resolution |
+| --- | --- |
+| `address already in use` for port 443 | `sudo ss -ltnp 'sport = :443'`. Stop or remove only the confirmed obsolete service. Pi-hole's `pihole-FTL` commonly occupies this port. |
+| Caddy cannot obtain a certificate | Confirm the public DNS `A` record, router TCP 443 forwarding, no CGNAT, and Caddy logs. Test from mobile data, not only the LAN. |
+| `ProfileNotFound` | The value of `AWS_PROFILE` must exactly match both `[profile clarity-bedrock]` in `config` and `[clarity-bedrock]` in `credentials`; recreate the worker afterward. |
+| `CredentialRetrievalError` | The container was given an interactive/login/`credential_process` profile. Use the dedicated static restricted runtime profile described in this guide. |
+| `unable to open database file` | Confirm `$APP_DIR/data` exists and is `700` owned by `10001:10001`; do not run the app if the encrypted mount is absent. |
+| Web is healthy but worker is absent | Inspect worker logs and recreate it: `sudo docker compose -f docker-compose.yml -f deploy/compose.aws-profile.yml up -d --force-recreate worker`. |
+| Browser receives `invalid_origin` | `PUBLIC_ORIGIN` must exactly match the browser origin, e.g. `https://reports.example.com`, with no trailing slash. Recreate containers after editing `.env`. |
+
+## 14. Account administration
+
+The initial administrator is made with `manage.py create-admin`. Create every subsequent clinician or administrator through the authenticated helper so the normal password hashing, CSRF checks, and audit event are retained:
+
+```sh
+cd "$APP_DIR"
+sudo apt install -y jq
+./scripts/create_user.sh \
+  --url https://reports.example.com \
+  --username jane.smith \
+  --full-name "Dr Jane Smith" \
+  --registration-number PSY0000000001 \
+  --role clinician
+```
+
+The helper prompts for the existing administrator password and then for the new user's password and confirmation; neither password appears while typing or is accepted on the command line. Passwords need at least 14 characters including upper-case, lower-case, and numeric characters. Use `--role admin` only for a genuine administrator.
+
+## 15. Final pre-live checklist
 
 Before any identifiable patient information is used, all of these must be complete:
 

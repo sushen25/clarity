@@ -85,6 +85,18 @@ Prompt, model, and template changes are clinical-output changes and require repr
 ## Account operations
 
 - Create the first administrator with `manage.py create-admin`; subsequent users are admin-created through the protected API/UI.
+- From an administrator workstation or the Pi, create a subsequent account with the interactive helper. It prompts for both passwords without echo, validates the role and password policy, uses the authenticated API so the creation is audited, logs out, and deletes its temporary session cookie:
+
+  ```sh
+  scripts/create_user.sh \
+    --url https://reports.example.com \
+    --username jane.smith \
+    --full-name "Dr Jane Smith" \
+    --registration-number PSY0000000001 \
+    --role clinician
+  ```
+
+  The helper requires `curl`, `jq`, and a valid HTTPS deployment. Never pass either password on the command line. Use `--role admin` only for a person who genuinely requires account administration and access to all cases.
 - Do not share accounts. Audit attribution depends on one identity per clinician.
 - There is no email password reset. A future administrative reset flow must authenticate the operator, follow practice identity checks, invalidate sessions, and create an audit event.
 - Disable departed or compromised accounts directly through an approved administrative procedure until a UI is implemented. Preserve the user record so historical audit and approval attribution remain intact.
