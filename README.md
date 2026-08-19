@@ -6,6 +6,8 @@ The system does **not** diagnose patients, score proprietary instruments, reprod
 
 Complete implementation, clinical, API, deployment, operations, security, and testing documentation is indexed in [docs/README.md](docs/README.md).
 
+The root [Makefile](Makefile) provides the standard local-development and Raspberry Pi deployment commands. Run `make help` for the complete list.
+
 ## What is implemented
 
 - Admin-created clinician accounts with Argon2id password hashing, secure sessions, CSRF protection, lockout, and case-level authorization.
