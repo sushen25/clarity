@@ -288,10 +288,9 @@ Always supply both Compose files so the worker receives the protected AWS profil
 
 ```sh
 cd "$APP_DIR"
-sudo docker compose -f docker-compose.yml -f deploy/compose.aws-profile.yml config
-sudo docker compose -f docker-compose.yml -f deploy/compose.aws-profile.yml build
-sudo docker compose -f docker-compose.yml -f deploy/compose.aws-profile.yml run --rm web \
-  python manage.py create-admin --username admin --full-name "Clinical Administrator"
+make compose-config
+make deploy
+make deploy-admin USERNAME=admin FULL_NAME="Clinical Administrator"
 ```
 
 Review the rendered Compose configuration carefully. It must show the exact `$AWS_CONFIG_DIR` host directory mounted read-only at `/home/app/.aws` in the worker. It must not print AWS secret values because those values are not part of `.env`.
@@ -303,9 +302,9 @@ Use a unique strong administrator password. There is no public registration or e
 Start the stack:
 
 ```sh
-sudo docker compose -f docker-compose.yml -f deploy/compose.aws-profile.yml up -d
-sudo docker compose -f docker-compose.yml -f deploy/compose.aws-profile.yml ps
-sudo docker compose -f docker-compose.yml -f deploy/compose.aws-profile.yml logs --tail=100 web worker caddy
+make deploy
+make deploy-ps
+make deploy-logs
 ```
 
 Confirm the worker resolves the expected AWS identity without displaying credentials:
@@ -348,10 +347,7 @@ Use a physically or logically separate encrypted destination; a directory on the
 ```sh
 cd "$APP_DIR"
 findmnt /mnt/clarity-backup
-sudo python3 scripts/backup.py \
-  --database data/app.db \
-  --storage storage \
-  --destination /mnt/clarity-backup
+make backup BACKUP_DEST=/mnt/clarity-backup
 ```
 
 The utility creates a consistent SQLite backup and copies the storage tree. With daily runs it retains seven daily and four weekly snapshots. It does not encrypt the destination itself.
@@ -393,10 +389,7 @@ Wait for the Pi to power down before disconnecting power or storage.
 
 ```sh
 cd "$APP_DIR"
-git pull --ff-only
-sudo docker compose -f docker-compose.yml -f deploy/compose.aws-profile.yml build
-sudo docker compose -f docker-compose.yml -f deploy/compose.aws-profile.yml up -d
-sudo docker compose -f docker-compose.yml -f deploy/compose.aws-profile.yml ps
+make deploy-update
 ```
 
 4. Repeat the health, synthetic Bedrock, preview, and DOCX checks.

@@ -33,10 +33,18 @@ Create a virtual environment and install dependencies as described in [deploymen
 Useful commands:
 
 ```sh
-pytest
-pytest tests/test_workflow.py
-pytest tests/test_parsers.py
+make bootstrap
+make dev
+# In a second terminal:
+make dev-worker
+
+make test
+make test-backend
+make frontend-test
+make personas
 ```
+
+`make dev` builds the React application and runs Flask at `http://localhost:8000` in the foreground. It forces local HTTP settings and the non-diagnostic local organiser; it does not make Bedrock requests. `make dev-up` and `make dev-down` provide the equivalent background processes and write only ignored `.run/` PID/log files. Use `make help` to see every supported command.
 
 Backend tests should use temporary databases and storage roots. Never point tests at a live or clinician-used database.
 
