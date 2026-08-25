@@ -134,6 +134,43 @@ def test_complete_clinician_workflow(app, authenticated, sample_txt):
     assert immutable.status_code == 409
 
 
+def test_deleting_source_removes_its_evidence_and_stored_file(app, authenticated, sample_txt):
+    client, headers = authenticated
+    created = client.post("/api/cases", headers=headers, json={"cohort": "adult", "patient_initials": "S. D."})
+    case_id = created.json["id"]
+    uploaded = client.post(
+        f"/api/cases/{case_id}/sources", headers=headers,
+        data={"file": sample_txt, "source_type": "transcript", "reporter": "patient", "setting": "clinical"},
+        content_type="multipart/form-data",
+    )
+    assert uploaded.status_code == 202
+    _run_jobs(app)
+
+    detail = client.get(f"/api/cases/{case_id}").json
+    source = detail["sources"][0]
+    renamed = client.patch(
+        f"/api/cases/{case_id}/sources/{source['id']}", headers=headers,
+        json={"original_filename": "clinician-notes.txt"},
+    )
+    assert renamed.status_code == 200
+    assert renamed.json["original_filename"] == "clinician-notes.txt"
+    assert client.patch(
+        f"/api/cases/{case_id}/sources/{source['id']}", headers=headers,
+        json={"original_filename": "clinician-notes.pdf"},
+    ).status_code == 400
+    with app.app_context():
+        storage_name = get_db().execute("SELECT storage_name FROM source_documents WHERE id=?", (source["id"],)).fetchone()[0]
+    stored_file = Path(app.config["STORAGE_ROOT"]) / storage_name
+    assert detail["evidence"]
+    assert stored_file.is_file()
+
+    deleted = client.delete(f"/api/cases/{case_id}/sources/{source['id']}", headers=headers)
+    assert deleted.status_code == 204
+    detail = client.get(f"/api/cases/{case_id}").json
+    assert detail["sources"] == []
+    assert detail["evidence"] == []
+    assert not stored_file.exists()
+
 def test_csrf_and_case_authorization(app, authenticated):
     client, headers = authenticated
     assert client.post("/api/cases", json={"cohort": "adult", "patient_initials": "X"}).status_code == 403

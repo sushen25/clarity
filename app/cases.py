@@ -162,6 +162,50 @@ def upload_source(case_id: str):
     return jsonify({"source_id": source_id, "job": job}), 202
 
 
+@cases_bp.delete("/cases/<case_id>/sources/<source_id>")
+@login_required
+def delete_source(case_id: str, source_id: str):
+    source, error = _source_or_error(case_id, source_id)
+    if error:
+        return error
+    db = get_db()
+    evidence_count = db.execute("SELECT COUNT(*) FROM evidence_items WHERE source_id=?", (source_id,)).fetchone()[0]
+    extraction_job_ids = [
+        row["id"] for row in db.execute("SELECT id,payload_json FROM jobs WHERE case_id=? AND job_type='extract_source'", (case_id,))
+        if json.loads(row["payload_json"]).get("source_id") == source_id
+    ]
+    if extraction_job_ids:
+        db.execute(f"DELETE FROM jobs WHERE id IN ({','.join('?' for _ in extraction_job_ids)})", extraction_job_ids)
+    db.execute("DELETE FROM source_documents WHERE id=? AND case_id=?", (source_id, case_id))
+    db.commit()
+
+    storage_root = Path(current_app.config["STORAGE_ROOT"]).resolve()
+    stored_file = (storage_root / source["storage_name"]).resolve()
+    if stored_file.is_relative_to(storage_root) and stored_file.is_file():
+        stored_file.unlink()
+    audit("source.deleted", g.user["id"], case_id, source_id, {"evidence_count": evidence_count})
+    return "", 204
+
+
+@cases_bp.patch("/cases/<case_id>/sources/<source_id>")
+@login_required
+def rename_source(case_id: str, source_id: str):
+    source, error = _source_or_error(case_id, source_id)
+    if error:
+        return error
+    body = request.get_json(silent=True) or {}
+    raw_filename = str(body.get("original_filename", "")).strip()
+    filename = Path(raw_filename).name
+    if not filename or filename != raw_filename or len(filename) > 255:
+        return jsonify({"error": "invalid_filename"}), 400
+    if Path(filename).suffix.lower() != Path(source["original_filename"]).suffix.lower():
+        return jsonify({"error": "file_extension_cannot_change"}), 400
+    get_db().execute("UPDATE source_documents SET original_filename=? WHERE id=? AND case_id=?", (filename, source_id, case_id))
+    get_db().commit()
+    audit("source.renamed", g.user["id"], case_id, source_id)
+    return jsonify(row_dict(get_db().execute("SELECT * FROM source_documents WHERE id=?", (source_id,)).fetchone()))
+
+
 @cases_bp.patch("/cases/<case_id>/evidence/<evidence_id>")
 @login_required
 def update_evidence(case_id: str, evidence_id: str):
