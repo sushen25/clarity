@@ -18,3 +18,19 @@ describe("clinical presentation schema", () => {
     });
   });
 });
+
+import {outcomeColumns, reviewedCriteria, reportCriteria} from './clinical';
+
+it('adult review requires both periods, adolescent review uses one', () => {
+  const criteria=[{clinician_outcome:'met',adulthood_outcome:'met',childhood_outcome:'unreviewed'}];
+  expect(reviewedCriteria(criteria,'adult')).toBe(0);
+  expect(reviewedCriteria(criteria,'adolescent')).toBe(1);
+  expect(outcomeColumns('adult').map(([,label])=>label)).toEqual(['Adulthood','Childhood']);
+  expect(outcomeColumns('adolescent')).toEqual([['clinician_outcome','Clinician outcome']]);
+});
+
+it('report tables use the saved draft decisions', () => {
+  const saved=[{criterion_id:'A1.1',adulthood_outcome:'not_met'}];
+  const actual=reportCriteria({input_snapshot:{criteria:saved,case:{cohort:'adult'}}},{criteria:[{adulthood_outcome:'met'}],case:{cohort:'adolescent'}});
+  expect(actual).toEqual({criteria:saved,cohort:'adult'});
+});

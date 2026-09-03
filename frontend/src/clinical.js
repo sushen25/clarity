@@ -21,3 +21,16 @@ export const criterionOutcomeLabels = {
   insufficient: "Insufficient evidence",
   unreviewed: "Not reviewed",
 };
+
+export const assessmentTypes = {diva:'DIVA assessment',questionnaire:'Questionnaire',cognitive:'Cognitive assessment',other:'Other / unclassified'};
+export const recommendationGroups = {general:'General Recommendations',adhd:'ADHD-related Recommendations',cognitive:'Cognitive Ability Recommendations',school:'School Recommendations',home:'Home Recommendations',strengths:'Strength-based Recommendations'};
+export function outcomeColumns(cohort) {
+  return cohort === 'adult' ? [['adulthood_outcome','Adulthood'],['childhood_outcome','Childhood']] : [['clinician_outcome','Clinician outcome']];
+}
+export function reviewedCriteria(criteria, cohort) {
+  return criteria.filter(item => outcomeColumns(cohort).every(([field]) => (item[field] || 'unreviewed') !== 'unreviewed')).length;
+}
+export function reportCriteria(draft, data) {
+  const snapshot = draft.input_snapshot;
+  return {criteria:snapshot?.criteria || data.criteria, cohort:snapshot?.case?.cohort || data.case.cohort};
+}
