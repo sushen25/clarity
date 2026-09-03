@@ -7,7 +7,9 @@ from pathlib import Path
 from flask import Blueprint, current_app, g, jsonify, request, send_file
 
 from .auth import login_required
-from .clinical import CRITERIA, DOMAINS, DOMAIN_DEFINITIONS, OUTCOMES, clinical_gaps
+from .clinical import CRITERIA, DOMAINS, DOMAIN_DEFINITIONS, OUTCOMES, ASSESSMENT_TYPES, TIMEFRAMES, DraftResult, outcome_columns, clinical_gaps
+from pydantic import ValidationError
+from .drafting import validate_draft
 from .db import audit, get_db, new_id, now, row_dict
 from .jobs import enqueue
 from .parsers import ALLOWED_EXTENSIONS
@@ -50,6 +52,8 @@ def create_case():
     initials = str(body.get("patient_initials", "")).strip()
     if cohort not in {"adult", "adolescent"} or not initials:
         return jsonify({"error": "cohort_and_patient_initials_required"}), 400
+    if not isinstance(body.get("demographics", {}), dict):
+        return jsonify({"error": "invalid_demographics"}), 400
     case_id, timestamp = new_id(), now()
     assigned = body.get("assigned_user_id") if g.user["role"] == "admin" else g.user["id"]
     if not assigned:
@@ -100,6 +104,8 @@ def update_case(case_id: str):
     if error:
         return error
     body = request.get_json(silent=True) or {}
+    if "demographics" in body and not isinstance(body["demographics"], dict):
+        return jsonify({"error": "invalid_demographics"}), 400
     allowed = {
         "patient_initials": ("patient_initials", str), "demographics": ("demographics_json", json.dumps),
         "referral_question": ("referral_question", str), "assessment_dates": ("assessment_dates_json", json.dumps),
@@ -144,6 +150,9 @@ def upload_source(case_id: str):
     suffix = Path(upload.filename).suffix.lower()
     if suffix not in ALLOWED_EXTENSIONS:
         return jsonify({"error": "unsupported_file_type"}), 400
+    assessment_type = request.form.get("assessment_type", "other")
+    if assessment_type not in ASSESSMENT_TYPES:
+        return jsonify({"error": "invalid_assessment_type"}), 400
     source_id = new_id()
     rel = Path("sources") / case_id / f"{source_id}{suffix}"
     target = Path(current_app.config["STORAGE_ROOT"]) / rel
@@ -152,9 +161,9 @@ def upload_source(case_id: str):
     digest = hashlib.sha256(target.read_bytes()).hexdigest()
     timestamp = now()
     get_db().execute(
-        "INSERT INTO source_documents(id,case_id,source_type,reporter,setting,instrument,original_filename,storage_name,sha256,mime_type,created_at) VALUES(?,?,?,?,?,?,?,?,?,'application/octet-stream',?)",
+        "INSERT INTO source_documents(id,case_id,source_type,reporter,setting,instrument,assessment_type,original_filename,storage_name,sha256,mime_type,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,'application/octet-stream',?)",
         (source_id, case_id, request.form.get("source_type", "transcript"), request.form.get("reporter", ""),
-         request.form.get("setting", ""), request.form.get("instrument", ""), Path(upload.filename).name, str(rel), digest, timestamp),
+         request.form.get("setting", ""), request.form.get("instrument", ""), assessment_type, Path(upload.filename).name, str(rel), digest, timestamp),
     )
     get_db().commit()
     job = enqueue("extract_source", case_id, {"source_id": source_id})
@@ -194,13 +203,17 @@ def rename_source(case_id: str, source_id: str):
     if error:
         return error
     body = request.get_json(silent=True) or {}
-    raw_filename = str(body.get("original_filename", "")).strip()
+    raw_filename = str(body.get("original_filename", source["original_filename"])).strip()
     filename = Path(raw_filename).name
     if not filename or filename != raw_filename or len(filename) > 255:
         return jsonify({"error": "invalid_filename"}), 400
     if Path(filename).suffix.lower() != Path(source["original_filename"]).suffix.lower():
         return jsonify({"error": "file_extension_cannot_change"}), 400
-    get_db().execute("UPDATE source_documents SET original_filename=? WHERE id=? AND case_id=?", (filename, source_id, case_id))
+    assessment_type = body.get("assessment_type", source["assessment_type"])
+    if assessment_type not in ASSESSMENT_TYPES:
+        return jsonify({"error": "invalid_assessment_type"}), 400
+    get_db().execute("UPDATE source_documents SET original_filename=?,assessment_type=?,instrument=? WHERE id=? AND case_id=?",
+                     (filename, assessment_type, str(body.get("instrument", source["instrument"])), source_id, case_id))
     get_db().commit()
     audit("source.renamed", g.user["id"], case_id, source_id)
     return jsonify(row_dict(get_db().execute("SELECT * FROM source_documents WHERE id=?", (source_id,)).fetchone()))
@@ -216,7 +229,15 @@ def update_evidence(case_id: str, evidence_id: str):
     if not row:
         return jsonify({"error": "evidence_not_found"}), 404
     body = request.get_json(silent=True) or {}
-    allowed = {"domain", "source_location", "supporting_text", "reporter", "setting", "confidence", "contradiction_status", "verified"}
+    allowed = {"domain", "source_location", "supporting_text", "reporter", "setting", "confidence", "contradiction_status", "verified", "assessment_type", "criterion_ids", "timeframe"}
+    if "assessment_type" in body and body["assessment_type"] not in ASSESSMENT_TYPES:
+        return jsonify({"error": "invalid_assessment_type"}), 400
+    if "timeframe" in body and body["timeframe"] not in TIMEFRAMES:
+        return jsonify({"error": "invalid_timeframe"}), 400
+    if "criterion_ids" in body and (not isinstance(body["criterion_ids"], list) or any(x not in CRITERIA for x in body["criterion_ids"])):
+        return jsonify({"error": "invalid_criterion_ids"}), 400
+    if set(body) & {"assessment_type", "criterion_ids", "timeframe", "supporting_text", "reporter", "domain", "setting", "source_location"}:
+        body.setdefault("verified", False)
     if "domain" in body and body["domain"] not in DOMAINS:
         return jsonify({"error": "invalid_domain", "allowed_domains": list(DOMAINS)}), 400
     if "supporting_text" in body:
@@ -237,8 +258,8 @@ def update_evidence(case_id: str, evidence_id: str):
     fields, values = [], []
     for key in allowed:
         if key in body:
-            fields.append(f"{key}=?")
-            values.append(int(bool(body[key])) if key == "verified" else body[key])
+            fields.append(f"{'criterion_ids_json' if key == 'criterion_ids' else key}=?")
+            values.append(json.dumps(body[key]) if key == "criterion_ids" else int(bool(body[key])) if key == "verified" else body[key])
     if not fields:
         return jsonify({"error": "no_supported_fields"}), 400
     get_db().execute(f"UPDATE evidence_items SET {','.join(fields)} WHERE id=? AND case_id=?", (*values, evidence_id, case_id))
@@ -256,10 +277,11 @@ def update_criterion(case_id: str, criterion_id: str):
     if criterion_id not in CRITERIA:
         return jsonify({"error": "invalid_criterion"}), 400
     body = request.get_json(silent=True) or {}
-    outcome = body.get("clinician_outcome", "unreviewed")
-    if outcome not in OUTCOMES:
+    existing = row_dict(get_db().execute("SELECT * FROM criterion_assessments WHERE case_id=? AND criterion_id=?", (case_id, criterion_id)).fetchone())
+    outcomes = {field: body.get(field, existing[field]) for field in ("clinician_outcome", "adulthood_outcome", "childhood_outcome")}
+    if any(value not in OUTCOMES for value in outcomes.values()):
         return jsonify({"error": "invalid_outcome"}), 400
-    evidence_ids = body.get("evidence_ids", [])
+    evidence_ids = body.get("evidence_ids", existing["evidence_ids"])
     if evidence_ids:
         count = get_db().execute(
             f"SELECT COUNT(*) FROM evidence_items WHERE case_id=? AND id IN ({','.join('?' for _ in evidence_ids)})",
@@ -268,12 +290,12 @@ def update_criterion(case_id: str, criterion_id: str):
         if count != len(set(evidence_ids)):
             return jsonify({"error": "invalid_evidence_reference"}), 400
     get_db().execute(
-        "UPDATE criterion_assessments SET evidence_ids_json=?,settings_json=?,impairment=?,clinician_outcome=?,notes=?,updated_at=? WHERE case_id=? AND criterion_id=?",
-        (json.dumps(evidence_ids), json.dumps(body.get("settings", [])), str(body.get("impairment", "")), outcome,
-         str(body.get("notes", "")), now(), case_id, criterion_id),
+        "UPDATE criterion_assessments SET evidence_ids_json=?,settings_json=?,impairment=?,clinician_outcome=?,adulthood_outcome=?,childhood_outcome=?,notes=?,updated_at=? WHERE case_id=? AND criterion_id=?",
+        (json.dumps(evidence_ids), json.dumps(body.get("settings", existing["settings"])), str(body.get("impairment", existing["impairment"])),
+         outcomes["clinician_outcome"], outcomes["adulthood_outcome"], outcomes["childhood_outcome"], str(body.get("notes", existing["notes"])), now(), case_id, criterion_id),
     )
     get_db().commit()
-    audit("criterion.updated", g.user["id"], case_id, criterion_id, {"outcome": outcome})
+    audit("criterion.updated", g.user["id"], case_id, criterion_id, {"outcomes": outcomes})
     return jsonify(row_dict(get_db().execute("SELECT * FROM criterion_assessments WHERE case_id=? AND criterion_id=?", (case_id, criterion_id)).fetchone()))
 
 
@@ -286,15 +308,50 @@ def create_instrument(case_id: str):
     body = request.get_json(silent=True) or {}
     if not str(body.get("instrument", "")).strip():
         return jsonify({"error": "instrument_required"}), 400
+    assessment_type = body.get("assessment_type", "other")
+    if assessment_type not in ASSESSMENT_TYPES:
+        return jsonify({"error": "invalid_assessment_type"}), 400
+    if not isinstance(body.get("scores", {}), dict):
+        return jsonify({"error": "invalid_scores"}), 400
     item_id, timestamp = new_id(), now()
     get_db().execute(
-        "INSERT INTO instrument_summaries(id,case_id,instrument,version,respondent,scores_json,interpretation,verified,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)",
+        "INSERT INTO instrument_summaries(id,case_id,instrument,version,respondent,scores_json,interpretation,verified,assessment_type,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
         (item_id, case_id, str(body["instrument"]), str(body.get("version", "")), str(body.get("respondent", "")),
-         json.dumps(body.get("scores", {})), str(body.get("interpretation", "")), int(bool(body.get("verified"))), timestamp, timestamp),
+         json.dumps(body.get("scores", {})), str(body.get("interpretation", "")), int(bool(body.get("verified"))), assessment_type, timestamp, timestamp),
     )
     get_db().commit()
     audit("instrument.created", g.user["id"], case_id, item_id, {"instrument": str(body["instrument"])})
     return jsonify(row_dict(get_db().execute("SELECT * FROM instrument_summaries WHERE id=?", (item_id,)).fetchone())), 201
+
+
+@cases_bp.patch("/cases/<case_id>/instruments/<instrument_id>")
+@login_required
+def update_instrument(case_id: str, instrument_id: str):
+    _case, error = _case_or_error(case_id)
+    if error:
+        return error
+    existing = row_dict(get_db().execute("SELECT * FROM instrument_summaries WHERE id=? AND case_id=?", (instrument_id, case_id)).fetchone())
+    if not existing:
+        return jsonify({"error": "instrument_not_found"}), 404
+    body = request.get_json(silent=True) or {}
+    assessment_type = body.get("assessment_type", existing["assessment_type"])
+    if assessment_type not in ASSESSMENT_TYPES:
+        return jsonify({"error": "invalid_assessment_type"}), 400
+    scores = body.get("scores", existing["scores"])
+    if not isinstance(scores, dict):
+        return jsonify({"error": "invalid_scores"}), 400
+    if not str(body.get("instrument", existing["instrument"])).strip():
+        return jsonify({"error": "instrument_required"}), 400
+    # Revised content needs verification again unless explicitly verified in this save.
+    verified = bool(body.get("verified", False))
+    get_db().execute(
+        "UPDATE instrument_summaries SET instrument=?,version=?,assessment_type=?,scores_json=?,interpretation=?,respondent=?,verified=?,updated_at=? WHERE id=? AND case_id=?",
+        (str(body.get("instrument", existing["instrument"])), str(body.get("version", existing["version"])), assessment_type, json.dumps(scores), str(body.get("interpretation", existing["interpretation"])),
+         str(body.get("respondent", existing["respondent"])), int(verified), now(), instrument_id, case_id),
+    )
+    get_db().commit()
+    audit("instrument.updated", g.user["id"], case_id, instrument_id)
+    return jsonify(row_dict(get_db().execute("SELECT * FROM instrument_summaries WHERE id=?", (instrument_id,)).fetchone()))
 
 
 @cases_bp.post("/cases/<case_id>/drafts")
@@ -329,6 +386,24 @@ def update_draft(case_id: str, draft_id: str):
         return jsonify({"error": "approved_draft_is_immutable"}), 409
     body = request.get_json(silent=True) or {}
     sections = body.get("sections", draft["sections"])
+    try:
+        parsed = DraftResult.model_validate({"sections": sections})
+    except ValidationError:
+        return jsonify({"error": "invalid_report_sections"}), 400
+    if "sections" in body:
+        if [s.key for s in parsed.sections] != [s["key"] for s in draft["sections"]]:
+            return jsonify({"error": "report_structure_cannot_change"}), 400
+        original_owned = [(s["key"], p) for s in draft["sections"] for p in s["paragraphs"] if p.get("kind", "narrative") != "narrative"]
+        supplied_owned = [(s["key"], p) for s in sections for p in s["paragraphs"] if p.get("kind", "narrative") != "narrative"]
+        if supplied_owned != original_owned:
+            return jsonify({"error": "generated_notices_and_intake_cannot_change", "message": "Update case intake or the clinician conclusion, then generate a new draft."}), 400
+        evidence = [row_dict(r) for r in get_db().execute("SELECT * FROM evidence_items WHERE case_id=? AND verified=1", (case_id,))]
+        instruments = [row_dict(r) for r in get_db().execute("SELECT * FROM instrument_summaries WHERE case_id=? AND verified=1", (case_id,))]
+        checked = validate_draft(parsed, (draft.get("input_snapshot") or {}).get("case", _case), evidence, instruments)
+        blocked = [w for w in checked.validation_warnings if "model paragraph(s) blocked" in w]
+        if blocked:
+            return jsonify({"error": "invalid_report_support", "requirements": blocked}), 400
+        sections = parsed.model_dump()["sections"]
     acknowledged = int(bool(body.get("warnings_acknowledged", draft["warnings_acknowledged"])))
     state = body.get("state", draft["state"])
     if state not in {"draft", "review-ready"}:
@@ -352,12 +427,32 @@ def approve_draft(case_id: str, draft_id: str):
     if not draft:
         return jsonify({"error": "draft_not_found"}), 404
     failures = []
+    if draft["state"] == "clinician-approved":
+        return jsonify({"error": "approved_draft_is_immutable"}), 409
     if draft["state"] != "review-ready": failures.append("Draft must be marked review-ready.")
     if draft["warnings"] and not draft["warnings_acknowledged"]: failures.append("Clinical warnings must be acknowledged.")
     if not case["cloud_consent"]: failures.append("Cloud-processing consent must be acknowledged.")
     if not case["final_diagnostic_conclusion"].strip(): failures.append("A clinician-authored diagnostic conclusion is required.")
-    criteria = get_db().execute("SELECT clinician_outcome FROM criterion_assessments WHERE case_id=?", (case_id,)).fetchall()
-    if len(criteria) != 18 or any(row[0] == "unreviewed" for row in criteria): failures.append("All 18 criterion outcomes must be reviewed.")
+    criteria = [row_dict(r) for r in get_db().execute("SELECT * FROM criterion_assessments WHERE case_id=? ORDER BY criterion_id", (case_id,))]
+    snapshot = draft.get("input_snapshot") or {}
+    applicable_criteria = snapshot.get("criteria", criteria)
+    if len(applicable_criteria) != 18 or any(row.get(field, "unreviewed") == "unreviewed" for row in applicable_criteria for field, _ in outcome_columns(case["cohort"])):
+        failures.append("All 18 criteria must be reviewed for each applicable age period. Generate a new draft after reviewing decisions.")
+    if snapshot:
+        if sorted(snapshot["criteria"], key=lambda c: c["criterion_id"]) != criteria or any(
+            snapshot["case"].get(field) != case.get(field) for field in ("final_diagnostic_conclusion", "demographics", "referral_question", "assessment_dates", "instruments")
+        ):
+            failures.append("Clinical inputs changed after drafting. Generate a new draft before approval.")
+        current_evidence = [row_dict(r) for r in get_db().execute(
+            "SELECT e.*,s.source_type,s.instrument AS source_instrument FROM evidence_items e JOIN source_documents s ON s.id=e.source_id WHERE e.case_id=? AND e.verified=1", (case_id,))]
+        current_instruments = [row_dict(r) for r in get_db().execute("SELECT * FROM instrument_summaries WHERE case_id=? AND verified=1", (case_id,))]
+        if any(sorted(snapshot.get(key, []), key=lambda x: x["id"]) != sorted(current, key=lambda x: x["id"])
+               for key, current in (("evidence", current_evidence), ("instruments", current_instruments))):
+            failures.append("Verified evidence or instrument summaries changed after drafting. Generate a new draft before approval.")
+    conclusions = [p for section in draft["sections"] if section["key"] == "summary" for p in section["paragraphs"]
+                   if p["text"] == case["final_diagnostic_conclusion"]]
+    if len(conclusions) != 1:
+        failures.append("The summary must contain the current clinician conclusion exactly once.")
     if not get_db().execute("SELECT 1 FROM evidence_items WHERE case_id=? AND verified=1", (case_id,)).fetchone(): failures.append("At least one evidence item must be verified.")
     if failures:
         return jsonify({"error": "approval_requirements_not_met", "requirements": failures}), 409

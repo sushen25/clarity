@@ -46,6 +46,21 @@ CRITERIA_LABELS = {
 }
 CRITERIA = list(CRITERIA_LABELS)
 OUTCOMES = ("unreviewed", "met", "not_met", "insufficient")
+ASSESSMENT_TYPES = ("diva", "questionnaire", "cognitive", "other")
+TIMEFRAMES = ("adulthood", "childhood", "adolescence", "unspecified")
+RECOMMENDATION_GROUPS = {
+    "general": "General Recommendations",
+    "adhd": "ADHD-related Recommendations",
+    "cognitive": "Cognitive Ability Recommendations",
+    "school": "School Recommendations",
+    "home": "Home Recommendations",
+    "strengths": "Strength-based Recommendations",
+}
+
+
+def outcome_columns(cohort: str) -> list[tuple[str, str]]:
+    return ([("adulthood_outcome", "Adulthood"), ("childhood_outcome", "Childhood")]
+            if cohort == "adult" else [("clinician_outcome", "Clinician outcome")])
 
 
 class ExtractedEvidence(BaseModel):
@@ -56,6 +71,9 @@ class ExtractedEvidence(BaseModel):
     setting: str = "unspecified"
     confidence: float = Field(ge=0, le=1)
     contradiction_status: Literal["none", "possible", "confirmed"] = "none"
+    assessment_type: Literal[*ASSESSMENT_TYPES] = "other"
+    criterion_ids: list[Literal[*CRITERIA]] = Field(default_factory=list)
+    timeframe: Literal[*TIMEFRAMES] = "unspecified"
 
     @field_validator("setting")
     @classmethod
@@ -67,9 +85,21 @@ class ExtractionResult(BaseModel):
     evidence: list[ExtractedEvidence] = Field(default_factory=list, max_length=250)
 
 
+class QuotationReference(BaseModel):
+    evidence_id: str
+    text: str = Field(min_length=1, max_length=800)
+
+
 class DraftParagraph(BaseModel):
     text: str = Field(min_length=1, max_length=5000)
     evidence_ids: list[str] = Field(default_factory=list)
+    instrument_ids: list[str] = Field(default_factory=list)
+    criterion_id: Literal[*CRITERIA] | None = None
+    quotations: list[QuotationReference] = Field(default_factory=list)
+    recommendation_group: Literal[*RECOMMENDATION_GROUPS] | None = None
+    recommendation_basis: Literal["guideline", "practical", "supplied"] | None = None
+    guideline_ids: list[str] = Field(default_factory=list)
+    kind: Literal["narrative", "missing_information", "clinician_conclusion", "intake"] = "narrative"
 
 
 class DraftSection(BaseModel):
@@ -90,7 +120,7 @@ REPORT_SECTIONS = [
     ("inattention", "Symptoms of Inattention"),
     ("hyperactivity_impulsivity", "Symptoms of Hyperactivity / Impulsivity"),
     ("observations", "Behavioural Observations"),
-    ("instruments", "Assessment Instruments"),
+    ("instruments", "Questionnaire Findings"),
     ("cognitive", "Cognitive Assessment"),
     ("diagnostic_criteria", "Diagnostic Criteria"),
     ("summary", "Summary and Diagnostic Conclusion"),
