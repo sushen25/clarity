@@ -96,13 +96,17 @@ def test_complete_clinician_workflow(app, authenticated, sample_txt):
 
     blocked = client.post(f"/api/cases/{case_id}/drafts/{draft['id']}/approve", headers=headers, json={})
     assert blocked.status_code == 409
-    assert "All 18 criterion outcomes" in " ".join(blocked.json["requirements"])
+    assert "All 18 criteria" in " ".join(blocked.json["requirements"])
 
     client.patch(f"/api/cases/{case_id}", headers=headers, json={"final_diagnostic_conclusion": "The clinician concludes that available information is insufficient for an ADHD diagnosis."})
     for criterion in detail["criteria"]:
         result = client.put(f"/api/cases/{case_id}/criteria/{criterion['criterion_id']}", headers=headers,
-                            json={"clinician_outcome": "not_met", "evidence_ids": [], "settings": [], "impairment": "", "notes": "Reviewed by clinician."})
+                            json={"clinician_outcome": "not_met", "adulthood_outcome": "not_met", "childhood_outcome": "not_met", "evidence_ids": [], "settings": [], "impairment": "", "notes": "Reviewed by clinician."})
         assert result.status_code == 200
+    # Report inputs are snapshotted: changed decisions require a fresh version.
+    client.post(f"/api/cases/{case_id}/drafts", headers=headers, json={})
+    _run_jobs(app)
+    draft = client.get(f"/api/cases/{case_id}").json["drafts"][0]
     client.patch(f"/api/cases/{case_id}/drafts/{draft['id']}", headers=headers,
                  json={"state": "review-ready", "warnings_acknowledged": True})
     _run_jobs(app)

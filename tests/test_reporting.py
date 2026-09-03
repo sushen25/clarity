@@ -13,7 +13,7 @@ def test_generated_report_contains_all_clinician_criteria(tmp_path):
     output = tmp_path / "criteria-report.docx"
     outcomes = ("met", "not_met", "insufficient", "unreviewed")
     criteria = [
-        {"criterion_id": identifier, "clinician_outcome": outcomes[index % len(outcomes)]}
+        {"criterion_id": identifier, "clinician_outcome": "unreviewed", "adulthood_outcome": outcomes[index % len(outcomes)], "childhood_outcome": outcomes[(index + 1) % len(outcomes)]}
         for index, identifier in enumerate(CRITERIA)
     ]
     generate_docx(
@@ -41,12 +41,9 @@ def test_generated_report_contains_all_clinician_criteria(tmp_path):
     assert "Verified clinical narrative." in report_text
     assert "Evidence:" not in report_text
     assert "evidence-1" not in report_text
-    assert report.settings.odd_and_even_pages_header_footer is True
-    assert report.sections[0].different_first_page_header_footer is True
-    assert report.sections[0].even_page_header.paragraphs[0].text == report.sections[0].header.paragraphs[0].text
-    assert report.sections[0].even_page_footer.paragraphs[0].text == report.sections[0].footer.paragraphs[0].text
-    assert report.sections[0].first_page_header.paragraphs[0].text == report.sections[0].header.paragraphs[0].text
-    assert report.sections[0].first_page_footer.paragraphs[0].text == report.sections[0].footer.paragraphs[0].text
+    assert report.settings.odd_and_even_pages_header_footer is False
+    assert report.sections[0].different_first_page_header_footer is False
+    assert "CLINICAL PSYCHOLOGY" in report.sections[0].header.paragraphs[0].text
     section_props = report.sections[0]._sectPr
     header_relationships = {
         reference.get(qn("r:id")) for reference in section_props.findall(qn("w:headerReference"))
@@ -75,4 +72,7 @@ def test_generated_report_contains_all_clinician_criteria(tmp_path):
         assert table.rows[0]._tr.get_or_add_trPr().find(qn("w:tblHeader")) is not None
         assert all(row._tr.get_or_add_trPr().find(qn("w:cantSplit")) is not None for row in table.rows)
         grid_widths = [int(column.get(qn("w:w"))) for column in table._tbl.tblGrid]
-        assert grid_widths == [7560, 1944]
+        assert grid_widths == [5616, 1944, 1944]
+        assert table.cell(0, 1).text == "Adulthood"
+        assert table.cell(0, 2).text == "Childhood"
+    assert criteria_tables[0].cell(1, 2).text == "Not met"

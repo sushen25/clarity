@@ -115,18 +115,16 @@ def test_draft_blocks_paragraphs_without_valid_evidence_links(app, monkeypatch):
     system_prompt = client.last_request["system"][0]["text"]
     assert "interweaves the evidence throughout" in system_prompt
     assert "attribute information naturally to its reporter" in system_prompt
-    assert "synthesise corroborating evidence from multiple reporters or settings" in system_prompt
+    assert "Synthesise corroborating evidence from multiple reporters or settings" in system_prompt
     assert "preserve meaningful differences or contradictions" in system_prompt
     assert "must not contain evidence UUIDs, source filenames, source locations" in system_prompt
     assert "evidence_ids are output metadata only" in system_prompt
     assert "If no verified evidence supports a section" in system_prompt
-    assert "For the diagnostic_criteria section, return paragraphs: []" in system_prompt
+    assert "diagnostic_criteria: return paragraphs: []" in system_prompt
     sections = {section.key: section for section in result.sections}
     assert [section.key for section in result.sections] == [key for key, _heading in REPORT_SECTIONS]
     assert [p.text for p in sections["background"].paragraphs] == ["Supported paragraph."]
     assert sections["diagnostic_criteria"].paragraphs == []
     assert [p.text for p in sections["summary"].paragraphs] == ["Clinician conclusion."]
-    assert result.validation_warnings == [
-        "1 model paragraph(s) with invalid evidence links were blocked.",
-        "1 unsupported model paragraph(s) were blocked.",
-    ]
+    assert "1 model paragraph(s) blocked: invalid evidence links." in result.validation_warnings
+    assert "1 model paragraph(s) blocked: unsupported content." in result.validation_warnings
