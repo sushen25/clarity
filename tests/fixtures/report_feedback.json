@@ -1,0 +1,1132 @@
+{
+  "case": {
+    "cohort": "adult",
+    "patient_initials": "SYN",
+    "demographics": {
+      "age": 28,
+      "gender": "female",
+      "birthplace": "Melbourne",
+      "living_arrangement": "with her partner",
+      "reported_by": "the client"
+    },
+    "assessment_dates": [
+      "2026-09-02"
+    ],
+    "instruments": [
+      "DIVA interview",
+      "Synthetic Attention Profile"
+    ],
+    "final_diagnostic_conclusion": "The clinician considers the available childhood evidence insufficient to establish an ADHD diagnosis at this stage."
+  },
+  "evidence": [
+    {
+      "id": "diva-adult-A1.1",
+      "source_id": "mixed-assessment",
+      "domain": "inattention",
+      "source_location": "DIVA interview block 1",
+      "supporting_text": "The client described their current experience: \u201cI rush the final check and miss small errors.\u201d They reported discussing this at home and at work.",
+      "reporter": "client",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A1.1"
+      ],
+      "timeframe": "adulthood",
+      "verified": true
+    },
+    {
+      "id": "diva-child-A1.1",
+      "source_id": "mixed-assessment",
+      "domain": "inattention",
+      "source_location": "DIVA history block 1",
+      "supporting_text": "The parent recalled the childhood discussion of A1.1: \u201cI did not notice this at home.\u201d They reported limited recall of classroom behaviour.",
+      "reporter": "parent",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A1.1"
+      ],
+      "timeframe": "childhood",
+      "verified": true,
+      "contradiction_status": "possible"
+    },
+    {
+      "id": "diva-adult-A1.2",
+      "source_id": "mixed-assessment",
+      "domain": "inattention",
+      "source_location": "DIVA interview block 2",
+      "supporting_text": "The client described their current experience: \u201cI lose track halfway through a long task.\u201d They reported discussing this at home and at work.",
+      "reporter": "client",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A1.2"
+      ],
+      "timeframe": "adulthood",
+      "verified": true
+    },
+    {
+      "id": "diva-child-A1.2",
+      "source_id": "mixed-assessment",
+      "domain": "inattention",
+      "source_location": "DIVA history block 2",
+      "supporting_text": "The parent recalled the childhood discussion of A1.2: \u201cI did not notice this at home.\u201d They reported limited recall of classroom behaviour.",
+      "reporter": "parent",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A1.2"
+      ],
+      "timeframe": "childhood",
+      "verified": true,
+      "contradiction_status": "possible"
+    },
+    {
+      "id": "diva-adult-A1.3",
+      "source_id": "mixed-assessment",
+      "domain": "inattention",
+      "source_location": "DIVA interview block 3",
+      "supporting_text": "The client described their current experience: \u201cI sometimes need people to repeat the last sentence.\u201d They reported discussing this at home and at work.",
+      "reporter": "client",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A1.3"
+      ],
+      "timeframe": "adulthood",
+      "verified": true
+    },
+    {
+      "id": "diva-child-A1.3",
+      "source_id": "mixed-assessment",
+      "domain": "inattention",
+      "source_location": "DIVA history block 3",
+      "supporting_text": "The parent recalled the childhood discussion of A1.3: \u201cI did not notice this at home.\u201d They reported limited recall of classroom behaviour.",
+      "reporter": "parent",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A1.3"
+      ],
+      "timeframe": "childhood",
+      "verified": true,
+      "contradiction_status": "possible"
+    },
+    {
+      "id": "diva-adult-A1.4",
+      "source_id": "mixed-assessment",
+      "domain": "inattention",
+      "source_location": "DIVA interview block 4",
+      "supporting_text": "The client described their current experience: \u201cI start the washing and forget to hang it out.\u201d They reported discussing this at home and at work.",
+      "reporter": "client",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A1.4"
+      ],
+      "timeframe": "adulthood",
+      "verified": true
+    },
+    {
+      "id": "diva-child-A1.4",
+      "source_id": "mixed-assessment",
+      "domain": "inattention",
+      "source_location": "DIVA history block 4",
+      "supporting_text": "The parent recalled the childhood discussion of A1.4: \u201cI did not notice this at home.\u201d They reported limited recall of classroom behaviour.",
+      "reporter": "parent",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A1.4"
+      ],
+      "timeframe": "childhood",
+      "verified": true,
+      "contradiction_status": "possible"
+    },
+    {
+      "id": "diva-adult-A1.5",
+      "source_id": "mixed-assessment",
+      "domain": "inattention",
+      "source_location": "DIVA interview block 5",
+      "supporting_text": "The client described their current experience: \u201cI cannot work out which task to do first.\u201d They reported discussing this at home and at work.",
+      "reporter": "client",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A1.5"
+      ],
+      "timeframe": "adulthood",
+      "verified": true
+    },
+    {
+      "id": "diva-child-A1.5",
+      "source_id": "mixed-assessment",
+      "domain": "inattention",
+      "source_location": "DIVA history block 5",
+      "supporting_text": "The parent recalled the childhood discussion of A1.5: \u201cI did not notice this at home.\u201d They reported limited recall of classroom behaviour.",
+      "reporter": "parent",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A1.5"
+      ],
+      "timeframe": "childhood",
+      "verified": true,
+      "contradiction_status": "possible"
+    },
+    {
+      "id": "diva-adult-A1.6",
+      "source_id": "mixed-assessment",
+      "domain": "inattention",
+      "source_location": "DIVA interview block 6",
+      "supporting_text": "The client described their current experience: \u201cI put off paperwork until the last day.\u201d They reported discussing this at home and at work.",
+      "reporter": "client",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A1.6"
+      ],
+      "timeframe": "adulthood",
+      "verified": true
+    },
+    {
+      "id": "diva-child-A1.6",
+      "source_id": "mixed-assessment",
+      "domain": "inattention",
+      "source_location": "DIVA history block 6",
+      "supporting_text": "The parent recalled the childhood discussion of A1.6: \u201cI did not notice this at home.\u201d They reported limited recall of classroom behaviour.",
+      "reporter": "parent",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A1.6"
+      ],
+      "timeframe": "childhood",
+      "verified": true,
+      "contradiction_status": "possible"
+    },
+    {
+      "id": "diva-adult-A1.7",
+      "source_id": "mixed-assessment",
+      "domain": "inattention",
+      "source_location": "DIVA interview block 7",
+      "supporting_text": "The client described their current experience: \u201cI leave my keys in a different place every day.\u201d They reported discussing this at home and at work.",
+      "reporter": "client",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A1.7"
+      ],
+      "timeframe": "adulthood",
+      "verified": true
+    },
+    {
+      "id": "diva-child-A1.7",
+      "source_id": "mixed-assessment",
+      "domain": "inattention",
+      "source_location": "DIVA history block 7",
+      "supporting_text": "The parent recalled the childhood discussion of A1.7: \u201cI did not notice this at home.\u201d They reported limited recall of classroom behaviour.",
+      "reporter": "parent",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A1.7"
+      ],
+      "timeframe": "childhood",
+      "verified": true,
+      "contradiction_status": "possible"
+    },
+    {
+      "id": "diva-adult-A1.8",
+      "source_id": "mixed-assessment",
+      "domain": "inattention",
+      "source_location": "DIVA interview block 8",
+      "supporting_text": "The client described their current experience: \u201cEvery nearby conversation pulls me away.\u201d They reported discussing this at home and at work.",
+      "reporter": "client",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A1.8"
+      ],
+      "timeframe": "adulthood",
+      "verified": true
+    },
+    {
+      "id": "diva-child-A1.8",
+      "source_id": "mixed-assessment",
+      "domain": "inattention",
+      "source_location": "DIVA history block 8",
+      "supporting_text": "The parent recalled the childhood discussion of A1.8: \u201cI did not notice this at home.\u201d They reported limited recall of classroom behaviour.",
+      "reporter": "parent",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A1.8"
+      ],
+      "timeframe": "childhood",
+      "verified": true,
+      "contradiction_status": "possible"
+    },
+    {
+      "id": "diva-adult-A1.9",
+      "source_id": "mixed-assessment",
+      "domain": "inattention",
+      "source_location": "DIVA interview block 9",
+      "supporting_text": "The client described their current experience: \u201cI forget appointments unless I set a reminder.\u201d They reported discussing this at home and at work.",
+      "reporter": "client",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A1.9"
+      ],
+      "timeframe": "adulthood",
+      "verified": true
+    },
+    {
+      "id": "diva-child-A1.9",
+      "source_id": "mixed-assessment",
+      "domain": "inattention",
+      "source_location": "DIVA history block 9",
+      "supporting_text": "The parent recalled the childhood discussion of A1.9: \u201cI did not notice this at home.\u201d They reported limited recall of classroom behaviour.",
+      "reporter": "parent",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A1.9"
+      ],
+      "timeframe": "childhood",
+      "verified": true,
+      "contradiction_status": "possible"
+    },
+    {
+      "id": "diva-adult-A2.1",
+      "source_id": "mixed-assessment",
+      "domain": "hyperactivity_impulsivity",
+      "source_location": "DIVA interview block 10",
+      "supporting_text": "The client described their current experience: \u201cI tap my foot throughout meetings.\u201d They reported discussing this at home and at work.",
+      "reporter": "client",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A2.1"
+      ],
+      "timeframe": "adulthood",
+      "verified": true
+    },
+    {
+      "id": "diva-child-A2.1",
+      "source_id": "mixed-assessment",
+      "domain": "hyperactivity_impulsivity",
+      "source_location": "DIVA history block 10",
+      "supporting_text": "The parent recalled the childhood discussion of A2.1: \u201cI did not notice this at home.\u201d They reported limited recall of classroom behaviour.",
+      "reporter": "parent",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A2.1"
+      ],
+      "timeframe": "childhood",
+      "verified": true,
+      "contradiction_status": "possible"
+    },
+    {
+      "id": "diva-adult-A2.2",
+      "source_id": "mixed-assessment",
+      "domain": "hyperactivity_impulsivity",
+      "source_location": "DIVA interview block 11",
+      "supporting_text": "The client described their current experience: \u201cI stay seated when I need to.\u201d They reported discussing this at home and at work.",
+      "reporter": "client",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A2.2"
+      ],
+      "timeframe": "adulthood",
+      "verified": true
+    },
+    {
+      "id": "diva-child-A2.2",
+      "source_id": "mixed-assessment",
+      "domain": "hyperactivity_impulsivity",
+      "source_location": "DIVA history block 11",
+      "supporting_text": "The parent recalled the childhood discussion of A2.2: \u201cI did not notice this at home.\u201d They reported limited recall of classroom behaviour.",
+      "reporter": "parent",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A2.2"
+      ],
+      "timeframe": "childhood",
+      "verified": true,
+      "contradiction_status": "possible"
+    },
+    {
+      "id": "diva-adult-A2.3",
+      "source_id": "mixed-assessment",
+      "domain": "hyperactivity_impulsivity",
+      "source_location": "DIVA interview block 12",
+      "supporting_text": "The client described their current experience: \u201cI feel restless while waiting for the meeting to end.\u201d They reported discussing this at home and at work.",
+      "reporter": "client",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A2.3"
+      ],
+      "timeframe": "adulthood",
+      "verified": true
+    },
+    {
+      "id": "diva-child-A2.3",
+      "source_id": "mixed-assessment",
+      "domain": "hyperactivity_impulsivity",
+      "source_location": "DIVA history block 12",
+      "supporting_text": "The parent recalled the childhood discussion of A2.3: \u201cI did not notice this at home.\u201d They reported limited recall of classroom behaviour.",
+      "reporter": "parent",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A2.3"
+      ],
+      "timeframe": "childhood",
+      "verified": true,
+      "contradiction_status": "possible"
+    },
+    {
+      "id": "diva-adult-A2.4",
+      "source_id": "mixed-assessment",
+      "domain": "hyperactivity_impulsivity",
+      "source_location": "DIVA interview block 13",
+      "supporting_text": "The client described their current experience: \u201cI can read quietly without disturbing others.\u201d They reported discussing this at home and at work.",
+      "reporter": "client",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A2.4"
+      ],
+      "timeframe": "adulthood",
+      "verified": true
+    },
+    {
+      "id": "diva-child-A2.4",
+      "source_id": "mixed-assessment",
+      "domain": "hyperactivity_impulsivity",
+      "source_location": "DIVA history block 13",
+      "supporting_text": "The parent recalled the childhood discussion of A2.4: \u201cI did not notice this at home.\u201d They reported limited recall of classroom behaviour.",
+      "reporter": "parent",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A2.4"
+      ],
+      "timeframe": "childhood",
+      "verified": true,
+      "contradiction_status": "possible"
+    },
+    {
+      "id": "diva-adult-A2.5",
+      "source_id": "mixed-assessment",
+      "domain": "hyperactivity_impulsivity",
+      "source_location": "DIVA interview block 14",
+      "supporting_text": "The client described their current experience: \u201cI can slow down and take a break.\u201d They reported discussing this at home and at work.",
+      "reporter": "client",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A2.5"
+      ],
+      "timeframe": "adulthood",
+      "verified": true
+    },
+    {
+      "id": "diva-child-A2.5",
+      "source_id": "mixed-assessment",
+      "domain": "hyperactivity_impulsivity",
+      "source_location": "DIVA history block 14",
+      "supporting_text": "The parent recalled the childhood discussion of A2.5: \u201cI did not notice this at home.\u201d They reported limited recall of classroom behaviour.",
+      "reporter": "parent",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A2.5"
+      ],
+      "timeframe": "childhood",
+      "verified": true,
+      "contradiction_status": "possible"
+    },
+    {
+      "id": "diva-adult-A2.6",
+      "source_id": "mixed-assessment",
+      "domain": "hyperactivity_impulsivity",
+      "source_location": "DIVA interview block 15",
+      "supporting_text": "The client described their current experience: \u201cI talk for longer than I intended.\u201d They reported discussing this at home and at work.",
+      "reporter": "client",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A2.6"
+      ],
+      "timeframe": "adulthood",
+      "verified": true
+    },
+    {
+      "id": "diva-child-A2.6",
+      "source_id": "mixed-assessment",
+      "domain": "hyperactivity_impulsivity",
+      "source_location": "DIVA history block 15",
+      "supporting_text": "The parent recalled the childhood discussion of A2.6: \u201cI did not notice this at home.\u201d They reported limited recall of classroom behaviour.",
+      "reporter": "parent",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A2.6"
+      ],
+      "timeframe": "childhood",
+      "verified": true,
+      "contradiction_status": "possible"
+    },
+    {
+      "id": "diva-adult-A2.7",
+      "source_id": "mixed-assessment",
+      "domain": "hyperactivity_impulsivity",
+      "source_location": "DIVA interview block 16",
+      "supporting_text": "The client described their current experience: \u201cI sometimes answer before the question is finished.\u201d They reported discussing this at home and at work.",
+      "reporter": "client",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A2.7"
+      ],
+      "timeframe": "adulthood",
+      "verified": true
+    },
+    {
+      "id": "diva-child-A2.7",
+      "source_id": "mixed-assessment",
+      "domain": "hyperactivity_impulsivity",
+      "source_location": "DIVA history block 16",
+      "supporting_text": "The parent recalled the childhood discussion of A2.7: \u201cI did not notice this at home.\u201d They reported limited recall of classroom behaviour.",
+      "reporter": "parent",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A2.7"
+      ],
+      "timeframe": "childhood",
+      "verified": true,
+      "contradiction_status": "possible"
+    },
+    {
+      "id": "diva-adult-A2.8",
+      "source_id": "mixed-assessment",
+      "domain": "hyperactivity_impulsivity",
+      "source_location": "DIVA interview block 17",
+      "supporting_text": "The client described their current experience: \u201cI can wait my turn in a queue.\u201d They reported discussing this at home and at work.",
+      "reporter": "client",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A2.8"
+      ],
+      "timeframe": "adulthood",
+      "verified": true
+    },
+    {
+      "id": "diva-child-A2.8",
+      "source_id": "mixed-assessment",
+      "domain": "hyperactivity_impulsivity",
+      "source_location": "DIVA history block 17",
+      "supporting_text": "The parent recalled the childhood discussion of A2.8: \u201cI did not notice this at home.\u201d They reported limited recall of classroom behaviour.",
+      "reporter": "parent",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A2.8"
+      ],
+      "timeframe": "childhood",
+      "verified": true,
+      "contradiction_status": "possible"
+    },
+    {
+      "id": "diva-adult-A2.9",
+      "source_id": "mixed-assessment",
+      "domain": "hyperactivity_impulsivity",
+      "source_location": "DIVA interview block 18",
+      "supporting_text": "The client described their current experience: \u201cI interrupt my partner before they finish.\u201d They reported discussing this at home and at work.",
+      "reporter": "client",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A2.9"
+      ],
+      "timeframe": "adulthood",
+      "verified": true
+    },
+    {
+      "id": "diva-child-A2.9",
+      "source_id": "mixed-assessment",
+      "domain": "hyperactivity_impulsivity",
+      "source_location": "DIVA history block 18",
+      "supporting_text": "The parent recalled the childhood discussion of A2.9: \u201cI did not notice this at home.\u201d They reported limited recall of classroom behaviour.",
+      "reporter": "parent",
+      "setting": "home",
+      "assessment_type": "diva",
+      "criterion_ids": [
+        "A2.9"
+      ],
+      "timeframe": "childhood",
+      "verified": true,
+      "contradiction_status": "possible"
+    },
+    {
+      "id": "family",
+      "domain": "family_social",
+      "supporting_text": "The client described a supportive relationship with their partner and regular contact with their mother. They said their father lived interstate.",
+      "reporter": "client",
+      "setting": "home",
+      "assessment_type": "other",
+      "verified": true
+    },
+    {
+      "id": "development",
+      "domain": "developmental",
+      "supporting_text": "The parent recalled no concerns about early milestones but was unsure of the dates.",
+      "reporter": "parent",
+      "setting": "home",
+      "assessment_type": "other",
+      "verified": true
+    },
+    {
+      "id": "referral",
+      "domain": "referral",
+      "supporting_text": "The client requested clarification of attention difficulties affecting work and home routines.",
+      "reporter": "client",
+      "setting": "work",
+      "assessment_type": "other",
+      "verified": true
+    },
+    {
+      "id": "strength",
+      "domain": "strengths",
+      "supporting_text": "The client described enjoying drawing and using visual reminders to complete tasks.",
+      "reporter": "client",
+      "setting": "home",
+      "assessment_type": "other",
+      "verified": true
+    },
+    {
+      "id": "school",
+      "domain": "education_work",
+      "supporting_text": "The client reported attending a course and losing track of multi-step assignments.",
+      "reporter": "client",
+      "setting": "school",
+      "assessment_type": "other",
+      "verified": true
+    },
+    {
+      "id": "questionnaire-in-mixed-source",
+      "source_id": "mixed-assessment",
+      "domain": "inattention",
+      "supporting_text": "The teacher questionnaire described frequent classroom distraction. QUESTIONNAIRE_ONLY_SENTINEL",
+      "reporter": "teacher",
+      "setting": "school",
+      "assessment_type": "questionnaire",
+      "criterion_ids": [
+        "A1.1"
+      ],
+      "timeframe": "adulthood",
+      "verified": true
+    }
+  ],
+  "criteria": [
+    {
+      "criterion_id": "A1.1",
+      "clinician_outcome": "unreviewed",
+      "adulthood_outcome": "met",
+      "childhood_outcome": "insufficient"
+    },
+    {
+      "criterion_id": "A1.2",
+      "clinician_outcome": "unreviewed",
+      "adulthood_outcome": "met",
+      "childhood_outcome": "insufficient"
+    },
+    {
+      "criterion_id": "A1.3",
+      "clinician_outcome": "unreviewed",
+      "adulthood_outcome": "met",
+      "childhood_outcome": "insufficient"
+    },
+    {
+      "criterion_id": "A1.4",
+      "clinician_outcome": "unreviewed",
+      "adulthood_outcome": "met",
+      "childhood_outcome": "insufficient"
+    },
+    {
+      "criterion_id": "A1.5",
+      "clinician_outcome": "unreviewed",
+      "adulthood_outcome": "met",
+      "childhood_outcome": "insufficient"
+    },
+    {
+      "criterion_id": "A1.6",
+      "clinician_outcome": "unreviewed",
+      "adulthood_outcome": "met",
+      "childhood_outcome": "insufficient"
+    },
+    {
+      "criterion_id": "A1.7",
+      "clinician_outcome": "unreviewed",
+      "adulthood_outcome": "met",
+      "childhood_outcome": "insufficient"
+    },
+    {
+      "criterion_id": "A1.8",
+      "clinician_outcome": "unreviewed",
+      "adulthood_outcome": "met",
+      "childhood_outcome": "insufficient"
+    },
+    {
+      "criterion_id": "A1.9",
+      "clinician_outcome": "unreviewed",
+      "adulthood_outcome": "met",
+      "childhood_outcome": "insufficient"
+    },
+    {
+      "criterion_id": "A2.1",
+      "clinician_outcome": "unreviewed",
+      "adulthood_outcome": "met",
+      "childhood_outcome": "insufficient"
+    },
+    {
+      "criterion_id": "A2.2",
+      "clinician_outcome": "unreviewed",
+      "adulthood_outcome": "not_met",
+      "childhood_outcome": "insufficient"
+    },
+    {
+      "criterion_id": "A2.3",
+      "clinician_outcome": "unreviewed",
+      "adulthood_outcome": "met",
+      "childhood_outcome": "insufficient"
+    },
+    {
+      "criterion_id": "A2.4",
+      "clinician_outcome": "unreviewed",
+      "adulthood_outcome": "not_met",
+      "childhood_outcome": "insufficient"
+    },
+    {
+      "criterion_id": "A2.5",
+      "clinician_outcome": "unreviewed",
+      "adulthood_outcome": "not_met",
+      "childhood_outcome": "insufficient"
+    },
+    {
+      "criterion_id": "A2.6",
+      "clinician_outcome": "unreviewed",
+      "adulthood_outcome": "met",
+      "childhood_outcome": "insufficient"
+    },
+    {
+      "criterion_id": "A2.7",
+      "clinician_outcome": "unreviewed",
+      "adulthood_outcome": "met",
+      "childhood_outcome": "insufficient"
+    },
+    {
+      "criterion_id": "A2.8",
+      "clinician_outcome": "unreviewed",
+      "adulthood_outcome": "not_met",
+      "childhood_outcome": "insufficient"
+    },
+    {
+      "criterion_id": "A2.9",
+      "clinician_outcome": "unreviewed",
+      "adulthood_outcome": "met",
+      "childhood_outcome": "insufficient"
+    }
+  ],
+  "instruments": [
+    {
+      "id": "self-scale",
+      "instrument": "Synthetic Attention Profile",
+      "respondent": "client",
+      "scores": {
+        "attention": 70
+      },
+      "interpretation": "The client reported frequent everyday attention difficulties.",
+      "assessment_type": "questionnaire",
+      "verified": true
+    },
+    {
+      "id": "parent-scale",
+      "instrument": "Synthetic Attention Profile",
+      "respondent": "parent",
+      "scores": {
+        "attention": 52
+      },
+      "interpretation": "The parent reported fewer attention difficulties at home.",
+      "assessment_type": "questionnaire",
+      "verified": true
+    },
+    {
+      "id": "teacher-scale",
+      "instrument": "Synthetic Classroom Profile",
+      "respondent": "teacher",
+      "scores": {
+        "attention": 18
+      },
+      "interpretation": "The teacher reported frequent classroom attention difficulties; this uses a different metric from the client scale.",
+      "assessment_type": "questionnaire",
+      "verified": true
+    },
+    {
+      "id": "cognitive-result",
+      "instrument": "Synthetic Cognitive Profile",
+      "respondent": "client",
+      "scores": {},
+      "interpretation": "The clinician noted stronger visual reasoning than performance on tasks holding several instructions in mind.",
+      "assessment_type": "cognitive",
+      "verified": true
+    }
+  ],
+  "diva_sections": [
+    {
+      "key": "inattention",
+      "heading": "inattention",
+      "paragraphs": [
+        {
+          "text": "During the DIVA interview, the client described their current experience as \u201cI rush the final check and miss small errors.\u201d and reported discussing this in home and work contexts. In contrast, their parent recalled childhood with the comment, \u201cI did not notice this at home.\u201d The parent also noted limited recall of classroom behaviour.",
+          "evidence_ids": [
+            "diva-adult-A1.1",
+            "diva-child-A1.1"
+          ],
+          "criterion_id": "A1.1",
+          "quotations": [
+            {
+              "evidence_id": "diva-adult-A1.1",
+              "text": "I rush the final check and miss small errors."
+            },
+            {
+              "evidence_id": "diva-child-A1.1",
+              "text": "I did not notice this at home."
+            }
+          ]
+        },
+        {
+          "text": "During the DIVA interview, the client described their current experience as \u201cI lose track halfway through a long task.\u201d and reported discussing this in home and work contexts. In contrast, their parent recalled childhood with the comment, \u201cI did not notice this at home.\u201d The parent also noted limited recall of classroom behaviour.",
+          "evidence_ids": [
+            "diva-adult-A1.2",
+            "diva-child-A1.2"
+          ],
+          "criterion_id": "A1.2",
+          "quotations": [
+            {
+              "evidence_id": "diva-adult-A1.2",
+              "text": "I lose track halfway through a long task."
+            },
+            {
+              "evidence_id": "diva-child-A1.2",
+              "text": "I did not notice this at home."
+            }
+          ]
+        },
+        {
+          "text": "During the DIVA interview, the client described their current experience as \u201cI sometimes need people to repeat the last sentence.\u201d and reported discussing this in home and work contexts. In contrast, their parent recalled childhood with the comment, \u201cI did not notice this at home.\u201d The parent also noted limited recall of classroom behaviour.",
+          "evidence_ids": [
+            "diva-adult-A1.3",
+            "diva-child-A1.3"
+          ],
+          "criterion_id": "A1.3",
+          "quotations": [
+            {
+              "evidence_id": "diva-adult-A1.3",
+              "text": "I sometimes need people to repeat the last sentence."
+            },
+            {
+              "evidence_id": "diva-child-A1.3",
+              "text": "I did not notice this at home."
+            }
+          ]
+        },
+        {
+          "text": "During the DIVA interview, the client described their current experience as \u201cI start the washing and forget to hang it out.\u201d and reported discussing this in home and work contexts. In contrast, their parent recalled childhood with the comment, \u201cI did not notice this at home.\u201d The parent also noted limited recall of classroom behaviour.",
+          "evidence_ids": [
+            "diva-adult-A1.4",
+            "diva-child-A1.4"
+          ],
+          "criterion_id": "A1.4",
+          "quotations": [
+            {
+              "evidence_id": "diva-adult-A1.4",
+              "text": "I start the washing and forget to hang it out."
+            },
+            {
+              "evidence_id": "diva-child-A1.4",
+              "text": "I did not notice this at home."
+            }
+          ]
+        },
+        {
+          "text": "During the DIVA interview, the client described their current experience as \u201cI cannot work out which task to do first.\u201d and reported discussing this in home and work contexts. In contrast, their parent recalled childhood with the comment, \u201cI did not notice this at home.\u201d The parent also noted limited recall of classroom behaviour.",
+          "evidence_ids": [
+            "diva-adult-A1.5",
+            "diva-child-A1.5"
+          ],
+          "criterion_id": "A1.5",
+          "quotations": [
+            {
+              "evidence_id": "diva-adult-A1.5",
+              "text": "I cannot work out which task to do first."
+            },
+            {
+              "evidence_id": "diva-child-A1.5",
+              "text": "I did not notice this at home."
+            }
+          ]
+        },
+        {
+          "text": "During the DIVA interview, the client described their current experience as \u201cI put off paperwork until the last day.\u201d and reported discussing this in home and work contexts. In contrast, their parent recalled childhood with the comment, \u201cI did not notice this at home.\u201d The parent also noted limited recall of classroom behaviour.",
+          "evidence_ids": [
+            "diva-adult-A1.6",
+            "diva-child-A1.6"
+          ],
+          "criterion_id": "A1.6",
+          "quotations": [
+            {
+              "evidence_id": "diva-adult-A1.6",
+              "text": "I put off paperwork until the last day."
+            },
+            {
+              "evidence_id": "diva-child-A1.6",
+              "text": "I did not notice this at home."
+            }
+          ]
+        },
+        {
+          "text": "During the DIVA interview, the client described their current experience as \u201cI leave my keys in a different place every day.\u201d and reported discussing this in home and work contexts. In contrast, their parent recalled childhood with the comment, \u201cI did not notice this at home.\u201d The parent also noted limited recall of classroom behaviour.",
+          "evidence_ids": [
+            "diva-adult-A1.7",
+            "diva-child-A1.7"
+          ],
+          "criterion_id": "A1.7",
+          "quotations": [
+            {
+              "evidence_id": "diva-adult-A1.7",
+              "text": "I leave my keys in a different place every day."
+            },
+            {
+              "evidence_id": "diva-child-A1.7",
+              "text": "I did not notice this at home."
+            }
+          ]
+        },
+        {
+          "text": "During the DIVA interview, the client described their current experience as \u201cEvery nearby conversation pulls me away.\u201d and reported discussing this in home and work contexts. In contrast, their parent recalled childhood with the comment, \u201cI did not notice this at home.\u201d The parent also noted limited recall of classroom behaviour.",
+          "evidence_ids": [
+            "diva-adult-A1.8",
+            "diva-child-A1.8"
+          ],
+          "criterion_id": "A1.8",
+          "quotations": [
+            {
+              "evidence_id": "diva-adult-A1.8",
+              "text": "Every nearby conversation pulls me away."
+            },
+            {
+              "evidence_id": "diva-child-A1.8",
+              "text": "I did not notice this at home."
+            }
+          ]
+        },
+        {
+          "text": "During the DIVA interview, the client described their current experience as \u201cI forget appointments unless I set a reminder.\u201d and reported discussing this in home and work contexts. In contrast, their parent recalled childhood with the comment, \u201cI did not notice this at home.\u201d The parent also noted limited recall of classroom behaviour.",
+          "evidence_ids": [
+            "diva-adult-A1.9",
+            "diva-child-A1.9"
+          ],
+          "criterion_id": "A1.9",
+          "quotations": [
+            {
+              "evidence_id": "diva-adult-A1.9",
+              "text": "I forget appointments unless I set a reminder."
+            },
+            {
+              "evidence_id": "diva-child-A1.9",
+              "text": "I did not notice this at home."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "hyperactivity_impulsivity",
+      "heading": "hyperactivity_impulsivity",
+      "paragraphs": [
+        {
+          "text": "During the DIVA interview, the client described their current experience as \u201cI tap my foot throughout meetings.\u201d and reported discussing this in home and work contexts. In contrast, their parent recalled childhood with the comment, \u201cI did not notice this at home.\u201d The parent also noted limited recall of classroom behaviour.",
+          "evidence_ids": [
+            "diva-adult-A2.1",
+            "diva-child-A2.1"
+          ],
+          "criterion_id": "A2.1",
+          "quotations": [
+            {
+              "evidence_id": "diva-adult-A2.1",
+              "text": "I tap my foot throughout meetings."
+            },
+            {
+              "evidence_id": "diva-child-A2.1",
+              "text": "I did not notice this at home."
+            }
+          ]
+        },
+        {
+          "text": "During the DIVA interview, the client described their current experience as \u201cI stay seated when I need to.\u201d and reported discussing this in home and work contexts. In contrast, their parent recalled childhood with the comment, \u201cI did not notice this at home.\u201d The parent also noted limited recall of classroom behaviour.",
+          "evidence_ids": [
+            "diva-adult-A2.2",
+            "diva-child-A2.2"
+          ],
+          "criterion_id": "A2.2",
+          "quotations": [
+            {
+              "evidence_id": "diva-adult-A2.2",
+              "text": "I stay seated when I need to."
+            },
+            {
+              "evidence_id": "diva-child-A2.2",
+              "text": "I did not notice this at home."
+            }
+          ]
+        },
+        {
+          "text": "During the DIVA interview, the client described their current experience as \u201cI feel restless while waiting for the meeting to end.\u201d and reported discussing this in home and work contexts. In contrast, their parent recalled childhood with the comment, \u201cI did not notice this at home.\u201d The parent also noted limited recall of classroom behaviour.",
+          "evidence_ids": [
+            "diva-adult-A2.3",
+            "diva-child-A2.3"
+          ],
+          "criterion_id": "A2.3",
+          "quotations": [
+            {
+              "evidence_id": "diva-adult-A2.3",
+              "text": "I feel restless while waiting for the meeting to end."
+            },
+            {
+              "evidence_id": "diva-child-A2.3",
+              "text": "I did not notice this at home."
+            }
+          ]
+        },
+        {
+          "text": "During the DIVA interview, the client described their current experience as \u201cI can read quietly without disturbing others.\u201d and reported discussing this in home and work contexts. In contrast, their parent recalled childhood with the comment, \u201cI did not notice this at home.\u201d The parent also noted limited recall of classroom behaviour.",
+          "evidence_ids": [
+            "diva-adult-A2.4",
+            "diva-child-A2.4"
+          ],
+          "criterion_id": "A2.4",
+          "quotations": [
+            {
+              "evidence_id": "diva-adult-A2.4",
+              "text": "I can read quietly without disturbing others."
+            },
+            {
+              "evidence_id": "diva-child-A2.4",
+              "text": "I did not notice this at home."
+            }
+          ]
+        },
+        {
+          "text": "During the DIVA interview, the client described their current experience as \u201cI can slow down and take a break.\u201d and reported discussing this in home and work contexts. In contrast, their parent recalled childhood with the comment, \u201cI did not notice this at home.\u201d The parent also noted limited recall of classroom behaviour.",
+          "evidence_ids": [
+            "diva-adult-A2.5",
+            "diva-child-A2.5"
+          ],
+          "criterion_id": "A2.5",
+          "quotations": [
+            {
+              "evidence_id": "diva-adult-A2.5",
+              "text": "I can slow down and take a break."
+            },
+            {
+              "evidence_id": "diva-child-A2.5",
+              "text": "I did not notice this at home."
+            }
+          ]
+        },
+        {
+          "text": "During the DIVA interview, the client described their current experience as \u201cI talk for longer than I intended.\u201d and reported discussing this in home and work contexts. In contrast, their parent recalled childhood with the comment, \u201cI did not notice this at home.\u201d The parent also noted limited recall of classroom behaviour.",
+          "evidence_ids": [
+            "diva-adult-A2.6",
+            "diva-child-A2.6"
+          ],
+          "criterion_id": "A2.6",
+          "quotations": [
+            {
+              "evidence_id": "diva-adult-A2.6",
+              "text": "I talk for longer than I intended."
+            },
+            {
+              "evidence_id": "diva-child-A2.6",
+              "text": "I did not notice this at home."
+            }
+          ]
+        },
+        {
+          "text": "During the DIVA interview, the client described their current experience as \u201cI sometimes answer before the question is finished.\u201d and reported discussing this in home and work contexts. In contrast, their parent recalled childhood with the comment, \u201cI did not notice this at home.\u201d The parent also noted limited recall of classroom behaviour.",
+          "evidence_ids": [
+            "diva-adult-A2.7",
+            "diva-child-A2.7"
+          ],
+          "criterion_id": "A2.7",
+          "quotations": [
+            {
+              "evidence_id": "diva-adult-A2.7",
+              "text": "I sometimes answer before the question is finished."
+            },
+            {
+              "evidence_id": "diva-child-A2.7",
+              "text": "I did not notice this at home."
+            }
+          ]
+        },
+        {
+          "text": "During the DIVA interview, the client described their current experience as \u201cI can wait my turn in a queue.\u201d and reported discussing this in home and work contexts. In contrast, their parent recalled childhood with the comment, \u201cI did not notice this at home.\u201d The parent also noted limited recall of classroom behaviour.",
+          "evidence_ids": [
+            "diva-adult-A2.8",
+            "diva-child-A2.8"
+          ],
+          "criterion_id": "A2.8",
+          "quotations": [
+            {
+              "evidence_id": "diva-adult-A2.8",
+              "text": "I can wait my turn in a queue."
+            },
+            {
+              "evidence_id": "diva-child-A2.8",
+              "text": "I did not notice this at home."
+            }
+          ]
+        },
+        {
+          "text": "During the DIVA interview, the client described their current experience as \u201cI interrupt my partner before they finish.\u201d and reported discussing this in home and work contexts. In contrast, their parent recalled childhood with the comment, \u201cI did not notice this at home.\u201d The parent also noted limited recall of classroom behaviour.",
+          "evidence_ids": [
+            "diva-adult-A2.9",
+            "diva-child-A2.9"
+          ],
+          "criterion_id": "A2.9",
+          "quotations": [
+            {
+              "evidence_id": "diva-adult-A2.9",
+              "text": "I interrupt my partner before they finish."
+            },
+            {
+              "evidence_id": "diva-child-A2.9",
+              "text": "I did not notice this at home."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
