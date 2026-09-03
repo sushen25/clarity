@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import shutil
 import subprocess
-from copy import deepcopy
 from pathlib import Path
 
 from docx import Document
@@ -13,13 +12,14 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Inches, Pt, RGBColor
 
-from .clinical import CRITERIA_LABELS, REPORT_SECTIONS
+from .clinical import CRITERIA_LABELS, REPORT_SECTIONS, RECOMMENDATION_GROUPS, outcome_columns
 
 
 TEAL = "6EB7C3"
 SLATE = RGBColor.from_string("173A44")
 MUTED = RGBColor.from_string("64767A")
 TABLE_WIDTHS_DXA = (7560, 1944)
+ADULT_TABLE_WIDTHS_DXA = (5616, 1944, 1944)
 
 
 def _shade(cell, fill: str) -> None:
@@ -74,7 +74,7 @@ def _prevent_row_split(row) -> None:
     props.append(OxmlElement("w:cantSplit"))
 
 
-def _set_table_geometry(table, widths: tuple[int, int]) -> None:
+def _set_table_geometry(table, widths: tuple[int, ...]) -> None:
     table.alignment = WD_TABLE_ALIGNMENT.LEFT
     table.autofit = False
     props = table._tbl.tblPr
@@ -132,20 +132,19 @@ def _criterion_status(outcome: str) -> str:
     }.get(outcome, "Not reviewed")
 
 
-def _criteria_table(doc: Document, criteria: list[dict], prefix: str, title: str) -> None:
+def _criteria_table(doc: Document, criteria: list[dict], prefix: str, title: str, cohort: str) -> None:
     by_id = {item["criterion_id"]: item for item in criteria}
-    table = doc.add_table(rows=1, cols=2)
+    columns = outcome_columns(cohort)
+    table = doc.add_table(rows=1, cols=1 + len(columns))
     table.style = "Table Grid"
     header = table.rows[0]
     _set_repeat_header(header)
     _prevent_row_split(header)
-    _shade(header.cells[0], TEAL)
-    _shade(header.cells[1], TEAL)
+    for cell in header.cells:
+        _shade(cell, TEAL)
     _write_cell(header.cells[0], title, bold=True, size=10.5)
-    _write_cell(
-        header.cells[1], "Clinician outcome", bold=True, size=9.5,
-        alignment=WD_ALIGN_PARAGRAPH.CENTER,
-    )
+    for index, (_, label) in enumerate(columns, 1):
+        _write_cell(header.cells[index], label, bold=True, size=9.5, alignment=WD_ALIGN_PARAGRAPH.CENTER)
 
     for index in range(1, 10):
         identifier = f"{prefix}.{index}"
@@ -154,53 +153,48 @@ def _criteria_table(doc: Document, criteria: list[dict], prefix: str, title: str
         _prevent_row_split(row)
         letter = chr(ord("a") + index - 1)
         _write_cell(row.cells[0], f"{letter}.   {CRITERIA_LABELS[identifier]}")
-        outcome = item.get("clinician_outcome", "unreviewed")
-        status_color = RGBColor.from_string("24633C") if outcome == "met" else MUTED
-        _write_cell(
-            row.cells[1], _criterion_status(outcome), bold=outcome == "met", size=9,
-            alignment=WD_ALIGN_PARAGRAPH.CENTER, color=status_color,
-        )
-
-    _set_table_geometry(table, TABLE_WIDTHS_DXA)
+        for column_index, (field, _) in enumerate(columns, 1):
+            outcome = item.get(field, "unreviewed")
+            status_color = RGBColor.from_string("24633C") if outcome == "met" else MUTED
+            _write_cell(row.cells[column_index], _criterion_status(outcome), bold=outcome == "met", size=9,
+                        alignment=WD_ALIGN_PARAGRAPH.CENTER, color=status_color)
+    _set_table_geometry(table, ADULT_TABLE_WIDTHS_DXA if cohort == "adult" else TABLE_WIDTHS_DXA)
 
 
-def _criteria_report(doc: Document, criteria: list[dict]) -> None:
-    _criteria_table(doc, criteria, "A1", "A1. Inattention Criteria")
+def _criteria_report(doc: Document, criteria: list[dict], cohort: str) -> None:
+    _criteria_table(doc, criteria, "A1", "A1. Inattention Criteria", cohort)
     spacer = doc.add_paragraph()
     spacer.paragraph_format.space_after = Pt(3)
-    _criteria_table(doc, criteria, "A2", "A2. Hyperactivity / Impulsivity Criteria")
+    _criteria_table(doc, criteria, "A2", "A2. Hyperactivity / Impulsivity Criteria", cohort)
 
 
 def _mirror_page_furniture(doc: Document) -> None:
-    """Make LibreOffice render identical furniture for every page variant."""
-    doc.settings.odd_and_even_pages_header_footer = True
+    """Use a single default page style so Word and LibreOffice repeat furniture.
+
+    Sharing one relationship among first/even/default headers causes some
+    LibreOffice versions to lose the header and top margin on continuation pages.
+    """
+    doc.settings.odd_and_even_pages_header_footer = False
     for section in doc.sections:
-        section.different_first_page_header_footer = True
-        for default_story, alternate_story in (
-            (section.header, section.even_page_header),
-            (section.footer, section.even_page_footer),
-            (section.header, section.first_page_header),
-            (section.footer, section.first_page_footer),
-        ):
-            for child in list(alternate_story._element):
-                alternate_story._element.remove(child)
-            for child in default_story._element:
-                alternate_story._element.append(deepcopy(child))
-        section_props = section._sectPr
+        section.different_first_page_header_footer = False
         for reference_name in ("headerReference", "footerReference"):
-            references = section_props.findall(qn(f"w:{reference_name}"))
-            default_reference = next(
-                reference for reference in references if reference.get(qn("w:type")) == "default"
-            )
-            default_relationship = default_reference.get(qn("r:id"))
-            for reference in references:
-                reference.set(qn("r:id"), default_relationship)
+            for reference in list(section._sectPr.findall(qn(f"w:{reference_name}"))):
+                if reference.get(qn("w:type")) != "default":
+                    section._sectPr.remove(reference)
 
 
 def generate_docx(template_path: Path, output_path: Path, case: dict, draft: dict,
                   clinician: dict, criteria: list[dict]) -> None:
     doc = Document(template_path)
     _mirror_page_furniture(doc)
+    subheading = doc.styles["Heading 2"]
+    subheading.font.name = "Arial Narrow"
+    subheading.font.size = Pt(10.5)
+    subheading.font.bold = True
+    subheading.font.color.rgb = SLATE
+    subheading.paragraph_format.keep_with_next = True
+    subheading.paragraph_format.space_before = Pt(8)
+    subheading.paragraph_format.space_after = Pt(4)
     body = doc._element.body
     for child in list(body):
         if child.tag != qn("w:sectPr"):
@@ -246,11 +240,9 @@ def generate_docx(template_path: Path, output_path: Path, case: dict, draft: dic
         is_criteria = section["key"] == "diagnostic_criteria"
         starts_new_page = is_criteria or previous_was_criteria
         previous_was_criteria = is_criteria
-        if starts_new_page:
-            doc.add_page_break()
-        _heading(doc, section["heading"])
+        _heading(doc, section["heading"], page_break_before=starts_new_page)
         if is_criteria:
-            _criteria_report(doc, criteria)
+            _criteria_report(doc, criteria, case["cohort"])
         if not section.get("paragraphs"):
             if is_criteria:
                 continue
@@ -258,8 +250,19 @@ def generate_docx(template_path: Path, output_path: Path, case: dict, draft: dic
             paragraph.runs[0].italic = True
             paragraph.runs[0].font.color.rgb = RGBColor(100, 100, 100)
             continue
+        previous_group = None
         for item in section["paragraphs"]:
-            paragraph = doc.add_paragraph(item["text"])
+            group = item.get("recommendation_group") if section["key"] == "recommendations" else None
+            if group and group != previous_group:
+                heading = doc.add_paragraph(RECOMMENDATION_GROUPS[group], style="Heading 2")
+                heading.paragraph_format.keep_with_next = True
+                previous_group = group
+            if item.get("kind") == "clinician_conclusion":
+                doc.add_paragraph("Clinician's diagnostic impression", style="Heading 2")
+            paragraph = doc.add_paragraph(item["text"], style="List Bullet" if group else None)
+            if item.get("kind") == "missing_information":
+                paragraph.runs[0].italic = True
+                paragraph.runs[0].font.color.rgb = MUTED
             paragraph.paragraph_format.space_after = Pt(7)
 
     _heading(doc, "Clinical Review Record", page_break_before=True)
