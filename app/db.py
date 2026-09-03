@@ -36,6 +36,28 @@ def init_db() -> None:
     db = get_db()
     with current_app.open_resource("schema.sql") as handle:
         db.executescript(handle.read().decode("utf-8"))
+    # Additive, idempotent migrations also support databases created by the POC.
+    # Legacy adult outcomes have no period: never copy them into either period.
+    additions = {
+        "source_documents": {"assessment_type": "TEXT NOT NULL DEFAULT 'other'"},
+        "evidence_items": {
+            "assessment_type": "TEXT NOT NULL DEFAULT 'other'",
+            "criterion_ids_json": "TEXT NOT NULL DEFAULT '[]'",
+            "timeframe": "TEXT NOT NULL DEFAULT 'unspecified'",
+        },
+        "instrument_summaries": {"assessment_type": "TEXT NOT NULL DEFAULT 'other'"},
+        "criterion_assessments": {
+            "adulthood_outcome": "TEXT NOT NULL DEFAULT 'unreviewed'",
+            "childhood_outcome": "TEXT NOT NULL DEFAULT 'unreviewed'",
+        },
+        "report_drafts": {"input_snapshot_json": "TEXT NOT NULL DEFAULT '{}'", "rendered_state": "TEXT NOT NULL DEFAULT ''"},
+    }
+    db.execute("BEGIN IMMEDIATE")
+    for table, columns in additions.items():
+        existing = {row[1] for row in db.execute(f"PRAGMA table_info({table})")}
+        for column, definition in columns.items():
+            if column not in existing:
+                db.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
     db.commit()
 
 
@@ -58,4 +80,3 @@ def audit(action: str, actor_user_id: str | None, case_id: str | None = None,
         (new_id(), actor_user_id, action, case_id, target_id, json.dumps(metadata or {}), now()),
     )
     get_db().commit()
-
