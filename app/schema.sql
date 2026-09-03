@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS source_documents (
   id TEXT PRIMARY KEY,
   case_id TEXT NOT NULL REFERENCES cases(id) ON DELETE CASCADE,
   source_type TEXT NOT NULL,
+  assessment_type TEXT NOT NULL DEFAULT 'other',
   reporter TEXT NOT NULL DEFAULT '',
   setting TEXT NOT NULL DEFAULT '',
   instrument TEXT NOT NULL DEFAULT '',
@@ -52,6 +53,9 @@ CREATE TABLE IF NOT EXISTS evidence_items (
   case_id TEXT NOT NULL REFERENCES cases(id) ON DELETE CASCADE,
   source_id TEXT NOT NULL REFERENCES source_documents(id) ON DELETE CASCADE,
   domain TEXT NOT NULL,
+  assessment_type TEXT NOT NULL DEFAULT 'other',
+  criterion_ids_json TEXT NOT NULL DEFAULT '[]',
+  timeframe TEXT NOT NULL DEFAULT 'unspecified',
   source_location TEXT NOT NULL,
   supporting_text TEXT NOT NULL,
   reporter TEXT NOT NULL DEFAULT '',
@@ -66,6 +70,7 @@ CREATE TABLE IF NOT EXISTS instrument_summaries (
   id TEXT PRIMARY KEY,
   case_id TEXT NOT NULL REFERENCES cases(id) ON DELETE CASCADE,
   instrument TEXT NOT NULL,
+  assessment_type TEXT NOT NULL DEFAULT 'other',
   version TEXT NOT NULL DEFAULT '',
   respondent TEXT NOT NULL DEFAULT '',
   scores_json TEXT NOT NULL DEFAULT '{}',
@@ -83,6 +88,8 @@ CREATE TABLE IF NOT EXISTS criterion_assessments (
   settings_json TEXT NOT NULL DEFAULT '[]',
   impairment TEXT NOT NULL DEFAULT '',
   clinician_outcome TEXT NOT NULL DEFAULT 'unreviewed',
+  adulthood_outcome TEXT NOT NULL DEFAULT 'unreviewed',
+  childhood_outcome TEXT NOT NULL DEFAULT 'unreviewed',
   notes TEXT NOT NULL DEFAULT '',
   updated_at TEXT NOT NULL,
   UNIQUE(case_id, criterion_id)
@@ -93,6 +100,8 @@ CREATE TABLE IF NOT EXISTS report_drafts (
   case_id TEXT NOT NULL REFERENCES cases(id) ON DELETE CASCADE,
   version INTEGER NOT NULL,
   sections_json TEXT NOT NULL,
+  input_snapshot_json TEXT NOT NULL DEFAULT '{}',
+  rendered_state TEXT NOT NULL DEFAULT '',
   warnings_json TEXT NOT NULL DEFAULT '[]',
   warnings_acknowledged INTEGER NOT NULL DEFAULT 0,
   template_version TEXT NOT NULL,
@@ -137,4 +146,3 @@ CREATE INDEX IF NOT EXISTS idx_sources_case ON source_documents(case_id);
 CREATE INDEX IF NOT EXISTS idx_evidence_case ON evidence_items(case_id);
 CREATE INDEX IF NOT EXISTS idx_jobs_ready ON jobs(status, available_at);
 CREATE INDEX IF NOT EXISTS idx_audit_case ON audit_events(case_id, created_at);
-
