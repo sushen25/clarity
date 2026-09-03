@@ -17,10 +17,10 @@
 - Title: Arial Narrow 15 pt, bold, centered, dark slate, 10 pt after.
 - Heading 1: Arial Narrow 10.5 pt, bold, uppercase, dark slate, kept with the following teal rule.
 - Tables: 6.6-inch content width, narrative columns sized to content, light teal header fill where applicable, no fixed row heights.
-- Diagnostic criteria: deterministic A1 and A2 tables on a new page, with a wide criterion column, compact clinician-outcome column, repeating teal headers, non-splitting rows, and explicit `Met`, `Not met`, `Insufficient evidence`, or `Not reviewed` states. Only clinician-set criterion outcomes are rendered; the model does not control this table.
+- Diagnostic criteria: deterministic A1 and A2 tables on a new page, with a wide criterion column, Adulthood and Childhood columns for adults, or one Clinician outcome column for adolescents, repeating teal headers, non-splitting rows, and explicit `Met`, `Not met`, `Insufficient evidence`, or `Not reviewed` states. Only clinician-set criterion outcomes are rendered; the model does not control this table.
 - Header: generic `CLINICAL PSYCHOLOGY` / `ADHD ASSESSMENT` text and teal rule; no copied practice logo or patient-bearing artwork. A paragraph-based header is used so LibreOffice repeats it reliably on overflow pages.
 - Footer: confidentiality notice and PAGE field.
-- Page-style compatibility: the generator mirrors the default header and footer into explicit even-page and first-page parts so LibreOffice and Word render identical page furniture throughout the report.
+- Page-style compatibility: the generator uses one default header/footer without first/even-page variants, and paragraph page-break properties for section starts. This avoids LibreOffice dropping furniture or top margins on continuation and criteria pages.
 
 ## Content flow and slots
 
@@ -37,3 +37,7 @@
 - All pages must render without clipping, overlap, boundary-hugging table text, or orphaned headings.
 - The repository template/package must contain none of the patient names, initials, dates, narrative, practitioner identity, or registration number from the reference.
 - The original reference must remain byte-for-byte unchanged.
+
+## Report template v2
+
+Subheadings use Arial Narrow 10.5 pt in slate. Recommendations render as semantic List Bullet paragraphs beneath applicable group headings. The exact clinician diagnostic impression has a dedicated subheading. New reports use snapshotted criterion values; the legacy patient reference and checked-in template remain untouched.

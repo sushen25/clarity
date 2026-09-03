@@ -223,3 +223,15 @@ Displays the generated PDF preview when LibreOffice conversion is complete. A mi
 Returns a job only if the current user can access its case. Relevant fields are `job_type`, `status`, `attempts`, `available_at`, `last_error`, and timestamps. `last_error` contains only an exception class, not clinical text.
 
 Job statuses are `queued`, `running`, `completed`, and `failed`. Transient failures retry twice after the first attempt with bounded exponential delays; a third failed attempt becomes terminal.
+
+## September 2026 report contract additions
+
+- Case `demographics` remains an object; Overview edits `age`, `gender`, `birthplace`, `living_arrangement` and `reported_by`. Omitted values are not inferred.
+- Source upload and `PATCH /api/cases/:case_id/sources/:source_id` accept `assessment_type` (`diva`, `questionnaire`, `cognitive`, `other`) and `instrument`. Source updates do not bulk-reclassify extracted evidence.
+- Evidence PATCH accepts `assessment_type`, `criterion_ids` (A1.1–A1.9 / A2.1–A2.9), and `timeframe` (`adulthood`, `childhood`, `adolescence`, `unspecified`). Content/classification changes reset verification unless explicitly verified in the request.
+- Instrument POST and new `PATCH /api/cases/:case_id/instruments/:instrument_id` accept classification, instrument/version, respondent, already-scored `scores` object, interpretation and verification. PATCH resets verification unless explicitly supplied.
+- Criterion PUT accepts `adulthood_outcome` and `childhood_outcome`, independently, alongside legacy/adolescent `clinician_outcome`. Omitted fields retain existing values. All use `unreviewed`, `met`, `not_met`, or `insufficient`.
+- Draft paragraphs add optional `instrument_ids`, `criterion_id`, `quotations` (`evidence_id`, exact `text`), `recommendation_group`, `recommendation_basis`, `guideline_ids`, and `kind`. Old paragraphs default to narrative with empty optional references. Recommendation groups are `general`, `adhd`, `cognitive`, `school`, `home`, `strengths`; bases are `guideline`, `practical`, `supplied`.
+- The application owns `kind=intake`, `missing_information` and `clinician_conclusion` paragraphs. Update their underlying inputs and regenerate rather than editing them. Narrative edits retain provenance validation. Report section topology remains fixed during editing.
+- Draft responses include `input_snapshot` with case, criteria, evidence, instruments and guideline reference version. `rendered_state` records the state of the generated file. Approval rejects changed clinical inputs, unreviewed applicable age periods or a missing/duplicated clinician conclusion. Approved draft edits and repeated approval return 409.
+- Startup performs additive, idempotent schema migration. Existing adult outcomes are retained; new period fields start `unreviewed`. Existing approved artifacts are not re-rendered during migration.

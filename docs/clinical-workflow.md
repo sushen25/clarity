@@ -114,3 +114,19 @@ Approval records an immutable snapshot. Later edits create a new draft version r
 - Check recommendations for relevance, scope of practice, feasibility, and risk.
 - Inspect the final DOCX and preview for omissions, pagination, table clipping, and accidental identifying data.
 - The approving clinician remains responsible for the assessment, diagnosis, and signed report.
+
+## Report feedback update (September 2026)
+
+Complete the demographic fields in Overview, including who reported the details. Background opens with age, reported gender, birthplace and living arrangements, followed by family relationships and developmental history. Unknown details remain absent rather than inferred.
+
+Classify each evidence passage as DIVA, questionnaire, cognitive assessment, or other. Source-level classification and instrument names provide extraction context; mixed documents must be reviewed passage by passage. DIVA evidence additionally has editable criterion topic tags and an adulthood/childhood/adolescence/unspecified timeframe. Topic tags do not decide outcomes. Changing evidence content or classification resets verification unless the clinician explicitly verifies the change. Existing evidence remains unclassified until reviewed; generic ADHD interviews are not automatically treated as DIVA.
+
+Adult criteria have independent Adulthood and Childhood outcomes. Adolescent criteria retain one Clinician outcome. Legacy adult decisions remain visible for reference with no inferred timeframe. Both adult periods need review before a new report can be approved. “Insufficient evidence” is a reviewed decision, not “Not met”.
+
+Drafting uses a separate DIVA-only call for the assessment introduction and all 18 symptom narratives. Questionnaire results cannot enter that input. Missing or blocked criterion narratives produce explicit notices and review warnings. Embedded quotations must match linked verified passages. Questionnaire findings integrate ADHD-related domains across respondents in ordinary language; cognitive findings stay separate. The clinician conclusion is inserted once, unchanged and labelled, with a pending notice if absent.
+
+Recommendations use relevant subheadings and bullet points. New proposals link to verified needs and distinguish guideline-supported options, practical suggestions and supplied advice. The reference set in `app/drafting.py` is versioned `aadpa-reviewed-2026-09-02-v1`; it records AADPA sections 3.1, 4.2 and the evidence limitations in 4.5. Practical school adaptations are not represented as proven standalone treatments.
+
+New drafts snapshot case details, criterion decisions, verified evidence and instrument summaries. Editing those inputs requires a new draft before approval; the review screen and export use saved decisions. Existing approved files remain unchanged. Instrument-only paragraphs have source links to their verified summaries. The local organiser provides attributed extracts and coverage notices; it explicitly flags that fluent synthesis, respondent comparisons and tailored recommendations require clinician work or model drafting.
+
+Generate a new version to apply these changes to an existing case. Review narrative quality, attribution, comparisons and clinical reasoning even when automated provenance checks pass. Automated checks cannot establish that every interpretation is clinically sound.

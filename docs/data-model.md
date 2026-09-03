@@ -93,3 +93,7 @@ Database paths are the authority. Filenames derived from users are reduced to a 
 - Case deletion is intentionally absent from the POC API. Archive, export, retention, and audited deletion must follow the practice’s record-retention policy.
 - Back up the database and filesystem as one logical record set. Restoring only one side can leave missing documents or dangling paths.
 - The schema currently uses idempotent `CREATE TABLE IF NOT EXISTS` statements rather than a migration framework. Before changing an existing table in a deployed system, add a tested, versioned migration mechanism and backup first.
+
+## Report contract v2 migration
+
+`source_documents` and `instrument_summaries` add `assessment_type` (default `other`). `evidence_items` adds `assessment_type`, `criterion_ids_json` (default `[]`) and `timeframe` (default `unspecified`). `criterion_assessments` adds `adulthood_outcome` and `childhood_outcome`, both initially `unreviewed`; the legacy `clinician_outcome` is never copied into those columns. `report_drafts` adds `input_snapshot_json` (default `{}`) and `rendered_state` (default empty). New drafts save their inputs at generation; old drafts remain readable. Migrations run under a write transaction and inspect existing columns before adding them.
