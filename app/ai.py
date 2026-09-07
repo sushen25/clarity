@@ -255,44 +255,72 @@ class BedrockClinicalAI(ClinicalAI):
                             "required_sections": [s for s in REPORT_SECTIONS if s[0] in DIVA_SECTIONS]}
             diva_result = DraftResult.model_validate(self._json("draft_diva", system, json.dumps(diva_payload)))
         validated_diva = validate_draft(diva_result, case, diva, [], sections=DIVA_SECTIONS, finalise=False)
-        sections = [s for s in diva_result.sections if s.key in DIVA_SECTIONS]
-        overview: list[dict] = []
+        drafted = [s for s in diva_result.sections if s.key in DIVA_SECTIONS]
+        general_keys = [key for key, _ in REPORT_SECTIONS if key not in DIVA_SECTIONS and key != "diagnostic_criteria"]
         warnings: list[str] = []
+        try:
+            # One request for the whole report. Drafting a section in isolation costs the
+            # cross-section context the report depends on, so the split below is a last
+            # resort rather than the normal path.
+            general = self._json("draft_general", system, json.dumps(
+                self._general_payload(case, evidence, criteria, instruments, validated_diva, general_keys)))
+            drafted.extend(s for s in DraftResult.model_validate(general).sections if s.key in general_keys)
+        except (ValueError, ValidationError) as exc:
+            # The single request did not fit or did not parse. Retrying it is pointless:
+            # the same request produces the same result. Draft in bounded groups instead so
+            # a large case still yields a report, and say so, because the grouped draft has
+            # less cross-section context than the report the clinician normally reviews.
+            current_app.logger.warning("draft.single_call_failed error_type=%s falling_back=grouped", type(exc).__name__)
+            warnings.append(
+                f"The report did not fit a single model request ({type(exc).__name__}), so its sections were "
+                "drafted separately and may repeat or read less cohesively than usual. Review the whole report."
+            )
+            drafted.extend(self._draft_in_groups(system, case, evidence, criteria, instruments, validated_diva, warnings))
+        combined = DraftResult(sections=drafted)
+        combined.validation_warnings = warnings
+        return validate_draft(combined, case, evidence, instruments)
+
+    @staticmethod
+    def _general_payload(case, evidence, criteria, instruments, validated_diva, keys, overview=None) -> dict:
+        payload = {
+            "case": {k: case.get(k) for k in ("cohort", "referral_question", "assessment_dates", "final_diagnostic_conclusion")},
+            "verified_evidence": evidence, "clinician_criteria": criteria, "verified_instruments": instruments,
+            "reviewed_diva_narrative": validated_diva.model_dump()["sections"],
+            "guideline_reference_version": REFERENCE_VERSION, "guideline_references": GUIDELINES,
+            "required_sections": [s for s in REPORT_SECTIONS if s[0] in keys],
+        }
+        if overview is not None:
+            payload["drafted_sections_for_overview"] = overview
+        return payload
+
+    def _draft_in_groups(self, system, case, evidence, criteria, instruments, validated_diva, warnings) -> list[DraftSection]:
+        """Last resort when the whole report will not fit one response.
+
+        Each group is small enough to complete on its own, and a group that still fails
+        costs its own sections rather than the report.
+        """
+        drafted: list[DraftSection] = []
+        overview: list[dict] = []
         for label, keys in GENERAL_DRAFT_GROUPS:
             group_evidence = self._group_evidence(label, evidence)
             if label == "findings" and not group_evidence and not instruments:
                 continue
-            payload = {
-                "case": {k: case.get(k) for k in ("cohort", "referral_question", "assessment_dates", "final_diagnostic_conclusion")},
-                "verified_evidence": group_evidence, "verified_instruments": instruments,
-                "required_sections": [s for s in REPORT_SECTIONS if s[0] in keys],
-            }
-            if label == "synthesis":
-                # The summary overviews what was actually drafted and accepted, and the
-                # recommendations need the clinician's decisions and the guideline set.
-                payload.update(clinician_criteria=criteria,
-                               reviewed_diva_narrative=validated_diva.model_dump()["sections"],
-                               drafted_sections_for_overview=overview,
-                               guideline_reference_version=REFERENCE_VERSION, guideline_references=GUIDELINES)
+            payload = self._general_payload(case, group_evidence, criteria, instruments, validated_diva, keys,
+                                            overview=overview if label == "synthesis" else None)
             try:
                 raw = self._json(f"draft_{label}", system, json.dumps(payload))
                 group = [s for s in DraftResult.model_validate(raw).sections if s.key in keys]
             except (ValueError, ValidationError) as exc:
-                # Truncated, unparseable, or schema-invalid output is deterministic: the same
-                # request would fail again. Losing one group must not discard the whole draft,
-                # so the section is left empty behind a warning the clinician must acknowledge.
                 current_app.logger.warning("draft.group_failed group=%s error_type=%s", label, type(exc).__name__)
                 warnings.append(
                     f"The {', '.join(dict(REPORT_SECTIONS)[k] for k in keys)} section could not be drafted "
                     f"({type(exc).__name__}); it is empty and needs clinician authorship or a new draft."
                 )
                 continue
-            sections.extend(group)
+            drafted.extend(group)
             overview.extend(validate_draft(DraftResult(sections=group), case, group_evidence, instruments,
                                            sections=set(keys), finalise=False).model_dump()["sections"])
-        combined = DraftResult(sections=sections)
-        combined.validation_warnings = warnings
-        return validate_draft(combined, case, evidence, instruments)
+        return drafted
 
     @staticmethod
     def _group_evidence(label: str, evidence: list[dict]) -> list[dict]:

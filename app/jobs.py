@@ -41,7 +41,10 @@ def claim_next_job():
     db = get_db()
     current = now()
     db.execute("BEGIN IMMEDIATE")
-    stale = (datetime.now(UTC) - timedelta(minutes=10)).isoformat()
+    # Drafting a whole report in one model request legitimately runs past ten minutes, so
+    # the lock has to outlast it. A single worker cannot reclaim its own running job (it
+    # only claims while idle), but a second worker could, and would draft the case twice.
+    stale = (datetime.now(UTC) - timedelta(minutes=45)).isoformat()
     db.execute(
         "UPDATE jobs SET status='queued',locked_at=NULL,available_at=?,updated_at=? WHERE status='running' AND locked_at<?",
         (current, current, stale),

@@ -163,10 +163,10 @@ def test_separate_model_call_cannot_access_questionnaires(feedback, monkeypatch)
     assert 'clinician_criteria' not in diva and 'case' not in diva
     assert len(section(result,'inattention').paragraphs)==9
     assert all('QUESTIONNAIRE_ONLY_SENTINEL' not in p.text for p in section(result,'inattention').paragraphs)
-    assert 'guideline_references' in calls['draft_synthesis']
+    assert 'guideline_references' in calls['draft_general']
 
 
-def test_each_draft_call_is_bounded_to_its_own_sections(feedback, monkeypatch):
+def test_whole_report_is_drafted_in_one_request(feedback, monkeypatch):
     calls={}
     def fake_json(self, operation, system, prompt):
         calls[operation]=json.loads(prompt)
@@ -174,20 +174,41 @@ def test_each_draft_call_is_bounded_to_its_own_sections(feedback, monkeypatch):
     monkeypatch.setattr(BedrockClinicalAI,'_json',fake_json)
     provider=object.__new__(BedrockClinicalAI)
     result=provider.draft(feedback['case'],feedback['evidence'],feedback['criteria'],feedback['instruments'])
-    # No single request may be asked for every section at once; that is what exhausted
-    # the output budget and failed the whole draft.
-    for operation,payload in calls.items():
-        requested={k for k,_ in payload['required_sections']}
-        assert len(requested)<=3, f'{operation} requests too many sections at once'
+    # Drafting a section in isolation loses the cross-section context the report needs, so
+    # the normal path is the DIVA call plus one request covering everything else.
+    assert set(calls)=={'draft_diva','draft_general'}
+    requested={k for k,_ in calls['draft_general']['required_sections']}
+    assert requested=={key for key,_ in REPORT_SECTIONS}-DIVA_SECTIONS-{'diagnostic_criteria'}
+    # The whole ledger reaches it; nothing is filtered out of view.
+    verified=[e for e in feedback['evidence'] if e.get('verified',True)]
+    assert len(calls['draft_general']['verified_evidence'])==len(verified)
+    assert [s.key for s in result.sections]==[key for key,_ in REPORT_SECTIONS]
+
+
+def test_oversized_report_falls_back_to_bounded_groups(feedback, app, monkeypatch):
+    calls={}
+    def fake_json(self, operation, system, prompt):
+        calls[operation]=json.loads(prompt)
+        if operation=='draft_general':
+            raise ValueError('Model output for draft_general exceeded the 24000 token budget')
+        if operation=='draft_diva':
+            return {'sections':feedback['diva_sections']}
+        payload=json.loads(prompt)
+        return {'sections':[{'key':k,'heading':h,'paragraphs':[]} for k,h in payload['required_sections']]}
+    monkeypatch.setattr(BedrockClinicalAI,'_json',fake_json)
+    provider=object.__new__(BedrockClinicalAI)
+    with app.app_context():
+        result=provider.draft(feedback['case'],feedback['evidence'],feedback['criteria'],feedback['instruments'])
+    # A report too large for one response still gets drafted, in bounded pieces.
+    assert 'draft_general' in calls
     for label,keys in GENERAL_DRAFT_GROUPS:
         if f'draft_{label}' in calls:
             assert {k for k,_ in calls[f'draft_{label}']['required_sections']}==set(keys)
-    # The findings call only ever receives instrument-backed provenance.
-    findings=calls.get('draft_findings')
-    if findings:
-        assert all(e['assessment_type'] in {'questionnaire','cognitive'} for e in findings['verified_evidence'])
-    # Every section still reaches the finished report even though no group produced text.
+            assert len(keys)<=3
+    # The clinician is told the report was assembled the degraded way.
+    assert any('did not fit a single model request' in w for w in result.validation_warnings), result.validation_warnings
     assert [s.key for s in result.sections]==[key for key,_ in REPORT_SECTIONS]
+    assert len(section(result,'inattention').paragraphs)==9
 
 
 def test_each_group_only_receives_evidence_its_sections_can_use(feedback, monkeypatch):
@@ -216,8 +237,8 @@ def test_each_group_only_receives_evidence_its_sections_can_use(feedback, monkey
 
 def test_one_failed_group_does_not_discard_the_whole_draft(app, feedback, monkeypatch):
     def fake_json(self, operation, system, prompt):
-        if operation=='draft_background':
-            raise ValueError('Model output for draft_background exceeded the 16000 token budget')
+        if operation in ('draft_general','draft_background'):
+            raise ValueError(f'Model output for {operation} exceeded the 24000 token budget')
         if operation=='draft_diva':
             return {'sections':feedback['diva_sections']}
         payload=json.loads(prompt)
@@ -232,8 +253,7 @@ def test_one_failed_group_does_not_discard_the_whole_draft(app, feedback, monkey
     # The clinician is told, and approval is blocked until warnings are acknowledged.
     assert any('Background Information' in w and 'could not be drafted' in w
                for w in result.validation_warnings), result.validation_warnings
-    assert not section(result,'background').paragraphs or all(
-        p.kind!='narrative' for p in section(result,'background').paragraphs)
+    assert all(p.kind!='narrative' for p in section(result,'background').paragraphs)
 
 
 def test_local_organiser_has_no_eight_item_limit_or_mixed_source_leakage(feedback):
