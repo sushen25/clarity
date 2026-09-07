@@ -87,6 +87,7 @@ In **IAM → Policies → Create policy → JSON**, create a policy named `Clari
       "Effect": "Allow",
       "Action": [
         "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream",
         "bedrock:GetInferenceProfile"
       ],
       "Resource": [
@@ -105,7 +106,9 @@ Why all three resources are present:
 - the second permits its Sydney destination model; and
 - the third permits its Melbourne destination model.
 
-Geographic cross-Region inference fails if IAM or an AWS Organizations service control policy blocks any destination Region in the profile. This application uses non-streaming `Converse`, for which `bedrock:InvokeModel` is sufficient; it does not need `bedrock:InvokeModelWithResponseStream`.
+Geographic cross-Region inference fails if IAM or an AWS Organizations service control policy blocks any destination Region in the profile.
+
+Drafting uses `ConverseStream`, which is authorised by `bedrock:InvokeModelWithResponseStream` — a separate action from `bedrock:InvokeModel`, not implied by it. An identity holding only `InvokeModel` fails a streamed call immediately with `AccessDeniedException`, in well under a second and with a request ID, which distinguishes it from a model or capacity problem. Both actions are listed above because extraction still uses the non-streamed call.
 
 Attach the policy to a dedicated runtime role or identity:
 
