@@ -14,6 +14,8 @@ Copy `.env.example` to `.env`; `.env` is excluded from source control. Productio
 | `PUBLIC_ORIGIN` | `http://localhost:8000` locally | Exact allowed browser origin for mutations; replace with the HTTPS production origin |
 | `PUBLIC_DOMAIN` | `reports.example.com` | Caddy hostname and certificate name |
 | `BEDROCK_ENABLED` | `false` | Enables real AWS model calls when `true` |
+| `AWS_PROFILE` | `clarity-bedrock` | Named profile the worker uses from the mounted AWS configuration |
+| `AWS_CONFIG_DIR` | `/srv/clarity/secrets/aws` | Protected host directory holding the runtime AWS profile; bind-mounted read-only into the worker by `deploy/compose.aws-profile.yml`, which fails to start if it is unset |
 | `AWS_REGION` | `ap-southeast-2` | Bedrock client region |
 | `BEDROCK_MODEL_ID` | `au.anthropic.claude-sonnet-4-6` | Pinned Australian geographic inference profile |
 | `BEDROCK_CONNECT_TIMEOUT_SECONDS` | `10` | Maximum time to establish a Bedrock connection |

@@ -5,7 +5,7 @@ PIP ?= .venv/bin/pip
 NPM ?= npm
 SUDO ?= sudo
 DEV_PORT ?= 8000
-APP_URL ?= https://reports.example.com
+APP_URL ?= $(strip $(shell sed -n 's/^[[:space:]]*PUBLIC_ORIGIN[[:space:]]*=[[:space:]]*//p' .env 2>/dev/null | tail -1 | tr -d '"'"'"'\r'))
 BACKUP_DEST ?=
 SERVICE ?=
 USERNAME ?=
@@ -13,6 +13,8 @@ FULL_NAME ?=
 REGISTRATION_NUMBER ?=
 ROLE ?= clinician
 ADMIN_USERNAME ?= admin
+AWS_LOGIN_PROFILE ?= clarity-bedrock-login
+AWS_PROFILE ?= clarity-bedrock
 
 COMPOSE := $(SUDO) docker compose -f docker-compose.yml -f deploy/compose.aws-profile.yml
 LOCAL_DATA_DIR := $(CURDIR)/data
@@ -20,8 +22,9 @@ LOCAL_STORAGE_DIR := $(CURDIR)/storage
 RUN_DIR := $(CURDIR)/.run
 DEV_API_PID := $(RUN_DIR)/api.pid
 DEV_WORKER_PID := $(RUN_DIR)/worker.pid
+LOAD_DOTENV := set -a; . ./.env; set +a;
 
-.PHONY: help bootstrap env frontend-install frontend-build frontend-test test test-backend check personas template dev dev-api dev-worker dev-up dev-down dev-status dev-logs admin-local compose-config deploy deploy-update deploy-recreate deploy-down deploy-ps deploy-logs deploy-health deploy-admin deploy-user backup reset-local-data
+.PHONY: help bootstrap env frontend-install frontend-build frontend-test test test-backend check personas template aws-login dev dev-api dev-worker dev-up dev-down dev-status dev-logs admin-local compose-config deploy deploy-update deploy-recreate deploy-down deploy-ps deploy-logs require-app-url deploy-health deploy-admin deploy-user backup reset-local-data
 
 help:
 	@printf '%s\n' \
@@ -32,6 +35,7 @@ help:
 	  '  make dev                       Build the UI then run Flask in the foreground on http://localhost:8000' \
 	  '  make dev-worker                Run the local background worker in the foreground (second terminal)' \
 	  '  make dev-up                    Start local Flask and worker in the background' \
+	  '  make aws-login                 Refresh AWS login and verify the Bedrock runtime profile' \
 	  '  make dev-down                  Stop only the local processes started by dev-up' \
 	  '  make dev-status                Show local development process state' \
 	  '  make dev-logs                  Follow local development logs' \
@@ -90,20 +94,24 @@ personas:
 template:
 	@$(PYTHON) scripts/build_template.py
 
+aws-login:
+	@aws login --profile "$(AWS_LOGIN_PROFILE)"
+	@aws sts get-caller-identity --profile "$(AWS_PROFILE)"
+
 dev: frontend-build
 	@echo 'Starting Flask at http://localhost:$(DEV_PORT). Run `make dev-worker` in another terminal.'
-	@COOKIE_SECURE=false PUBLIC_ORIGIN=http://localhost:$(DEV_PORT) BEDROCK_ENABLED=false $(PYTHON) -m flask --app 'app:create_app()' run --debug --port $(DEV_PORT)
+	@$(LOAD_DOTENV) COOKIE_SECURE=false PUBLIC_ORIGIN=http://localhost:$(DEV_PORT) $(PYTHON) -m flask --app 'app:create_app()' run --debug --port $(DEV_PORT)
 
 dev-api: dev
 
 dev-worker:
-	@echo 'Starting the local worker. It uses the local non-diagnostic organiser.'
-	@COOKIE_SECURE=false PUBLIC_ORIGIN=http://localhost:$(DEV_PORT) BEDROCK_ENABLED=false $(PYTHON) -m app.worker
+	@echo 'Starting the local worker. It uses the provider configured in .env.'
+	@$(LOAD_DOTENV) COOKIE_SECURE=false PUBLIC_ORIGIN=http://localhost:$(DEV_PORT) $(PYTHON) -m app.worker
 
 dev-up: frontend-build
 	@mkdir -p "$(RUN_DIR)"
-	@if [ -f "$(DEV_API_PID)" ] && kill -0 "$$(cat "$(DEV_API_PID)")" 2>/dev/null; then echo 'Local API is already running. Run `make dev-status`.'; else rm -f "$(DEV_API_PID)"; COOKIE_SECURE=false PUBLIC_ORIGIN=http://localhost:$(DEV_PORT) BEDROCK_ENABLED=false nohup "$(PYTHON)" -m flask --app 'app:create_app()' run --debug --port "$(DEV_PORT)" >"$(RUN_DIR)/api.log" 2>&1 & echo $$! >"$(DEV_API_PID)"; echo "Started local API (PID $$(cat "$(DEV_API_PID)"))."; fi
-	@if [ -f "$(DEV_WORKER_PID)" ] && kill -0 "$$(cat "$(DEV_WORKER_PID)")" 2>/dev/null; then echo 'Local worker is already running. Run `make dev-status`.'; else rm -f "$(DEV_WORKER_PID)"; COOKIE_SECURE=false PUBLIC_ORIGIN=http://localhost:$(DEV_PORT) BEDROCK_ENABLED=false nohup "$(PYTHON)" -m app.worker >"$(RUN_DIR)/worker.log" 2>&1 & echo $$! >"$(DEV_WORKER_PID)"; echo "Started local worker (PID $$(cat "$(DEV_WORKER_PID)"))."; fi
+	@if [ -f "$(DEV_API_PID)" ] && kill -0 "$$(cat "$(DEV_API_PID)")" 2>/dev/null; then echo 'Local API is already running. Run `make dev-status`.'; else rm -f "$(DEV_API_PID)"; $(LOAD_DOTENV) COOKIE_SECURE=false PUBLIC_ORIGIN=http://localhost:$(DEV_PORT) nohup "$(PYTHON)" -m flask --app 'app:create_app()' run --debug --port "$(DEV_PORT)" >"$(RUN_DIR)/api.log" 2>&1 & echo $$! >"$(DEV_API_PID)"; echo "Started local API (PID $$(cat "$(DEV_API_PID)"))."; fi
+	@if [ -f "$(DEV_WORKER_PID)" ] && kill -0 "$$(cat "$(DEV_WORKER_PID)")" 2>/dev/null; then echo 'Local worker is already running. Run `make dev-status`.'; else rm -f "$(DEV_WORKER_PID)"; $(LOAD_DOTENV) COOKIE_SECURE=false PUBLIC_ORIGIN=http://localhost:$(DEV_PORT) nohup "$(PYTHON)" -m app.worker >"$(RUN_DIR)/worker.log" 2>&1 & echo $$! >"$(DEV_WORKER_PID)"; echo "Started local worker (PID $$(cat "$(DEV_WORKER_PID)"))."; fi
 	@echo 'Open http://localhost:$(DEV_PORT). Run `make dev-logs` to follow logs.'
 
 dev-down:
@@ -144,10 +152,16 @@ deploy-down:
 deploy-ps:
 	@$(COMPOSE) ps
 
+# APP_URL defaults to PUBLIC_ORIGIN in .env so a deployment cannot silently
+# health-check or create accounts against the wrong host.
+require-app-url:
+	@if [ -z "$(APP_URL)" ]; then echo 'APP_URL is empty. Set PUBLIC_ORIGIN in .env, or run: make $(MAKECMDGOALS) APP_URL=https://your-domain'; exit 1; fi
+	@case "$(APP_URL)" in https://*|http://*) ;; *) echo 'APP_URL must include the scheme, for example https://clarity.example.com (got: $(APP_URL)).'; exit 1;; esac
+
 deploy-logs:
 	@$(COMPOSE) logs -f --tail=100 $(SERVICE)
 
-deploy-health:
+deploy-health: require-app-url
 	@$(COMPOSE) exec web python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/api/health').read().decode())"
 	@curl --fail --show-error "$(APP_URL)/api/health"
 
@@ -155,7 +169,7 @@ deploy-admin:
 	@if [ -z "$(USERNAME)" ] || [ -z "$(FULL_NAME)" ]; then echo 'Usage: make deploy-admin USERNAME=admin FULL_NAME="Clinical Administrator"'; exit 1; fi
 	@$(COMPOSE) run --rm web python manage.py create-admin --username "$(USERNAME)" --full-name "$(FULL_NAME)"
 
-deploy-user:
+deploy-user: require-app-url
 	@if [ -z "$(USERNAME)" ] || [ -z "$(FULL_NAME)" ]; then echo 'Usage: make deploy-user USERNAME=jane.smith FULL_NAME="Dr Jane Smith" [REGISTRATION_NUMBER=PSY...] [ROLE=clinician]'; exit 1; fi
 	@./scripts/create_user.sh --url "$(APP_URL)" --username "$(USERNAME)" --full-name "$(FULL_NAME)" --registration-number "$(REGISTRATION_NUMBER)" --role "$(ROLE)" --admin-username "$(ADMIN_USERNAME)"
 
