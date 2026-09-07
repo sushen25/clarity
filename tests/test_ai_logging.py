@@ -9,17 +9,23 @@ from app.clinical import DOMAINS, DOMAIN_DEFINITIONS, ExtractionResult, REPORT_S
 
 
 class _FakeBedrockClient:
-    def __init__(self, output_text: str = '{"status":"sensitive-model-output"}'):
+    def __init__(self, output_text: str = '{"status":"sensitive-model-output"}', stop_reason: str = "end_turn"):
         self.output_text = output_text
+        self.stop_reason = stop_reason
         self.last_request = None
 
-    def converse(self, **kwargs):
+    def converse_stream(self, **kwargs):
         self.last_request = kwargs
+        # Chunked the way Bedrock delivers it, so a buffered read cannot creep back in.
+        half = len(self.output_text) // 2
         return {
-            "output": {"message": {"content": [{"text": self.output_text}]}},
-            "stopReason": "end_turn",
-            "usage": {"inputTokens": 12, "outputTokens": 4},
             "ResponseMetadata": {"RequestId": "test-request-id"},
+            "stream": iter([
+                {"contentBlockDelta": {"delta": {"text": self.output_text[:half]}}},
+                {"contentBlockDelta": {"delta": {"text": self.output_text[half:]}}},
+                {"messageStop": {"stopReason": self.stop_reason}},
+                {"metadata": {"usage": {"inputTokens": 12, "outputTokens": 4}}},
+            ]),
         }
 
 
@@ -128,3 +134,29 @@ def test_draft_blocks_paragraphs_without_valid_evidence_links(app, monkeypatch):
     assert [p.text for p in sections["summary"].paragraphs] == ["Clinician conclusion."]
     assert "1 model paragraph(s) blocked: invalid evidence links." in result.validation_warnings
     assert "1 model paragraph(s) blocked: unsupported content." in result.validation_warnings
+
+
+def test_streaming_is_used_so_a_long_report_cannot_trip_the_read_timeout(app, monkeypatch):
+    client = _FakeBedrockClient()
+    monkeypatch.setattr(boto3, "client", lambda *_a, **_k: client)
+    app.config.update(BEDROCK_ENABLED=True, BEDROCK_MODEL_ID="test-model")
+    with app.app_context():
+        provider = get_ai()
+        # A buffered converse() returns nothing until generation finishes, making the read
+        # timeout a wall clock on the whole report. Only the streaming call may be used.
+        assert not hasattr(client, "converse"), "the fake must not offer a buffered call"
+        assert provider._json("draft_general", "system", "prompt") == {"status": "sensitive-model-output"}
+
+
+def test_truncated_output_is_reported_against_its_operation(app, monkeypatch):
+    client = _FakeBedrockClient('{"sections":[]}', stop_reason="max_tokens")
+    monkeypatch.setattr(boto3, "client", lambda *_a, **_k: client)
+    app.config.update(BEDROCK_ENABLED=True, BEDROCK_MODEL_ID="test-model", BEDROCK_DRAFT_MAX_TOKENS=12345)
+    with app.app_context():
+        provider = get_ai()
+        try:
+            provider._json("draft_general", "system", "prompt")
+        except ValueError as exc:
+            assert "draft_general" in str(exc) and "12345" in str(exc)
+        else:
+            raise AssertionError("a truncated response must fail rather than be parsed")

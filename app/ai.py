@@ -164,7 +164,7 @@ class BedrockClinicalAI(ClinicalAI):
         self._http_attempt = 0
         events = getattr(getattr(self.client, "meta", None), "events", None)
         if events:
-            events.register("before-send.bedrock-runtime.Converse", self._log_http_attempt)
+            events.register("before-send.bedrock-runtime.ConverseStream", self._log_http_attempt)
 
     def _log_http_attempt(self, **_kwargs) -> None:
         self._http_attempt += 1
@@ -183,12 +183,26 @@ class BedrockClinicalAI(ClinicalAI):
             operation, self.region, self.model_id, self.read_timeout, operation_max_tokens, self.sdk_max_attempts,
         )
         try:
-            response = self.client.converse(
+            # Streamed rather than buffered: converse() returns nothing until the whole
+            # response is generated, so the read timeout becomes a wall clock on total
+            # generation and a long report fails outright however high the timeout is set.
+            # Streaming resets that timeout on every chunk, so only a genuine stall trips it.
+            response = self.client.converse_stream(
                 modelId=self.model_id,
                 system=[{"text": system}],
                 messages=[{"role": "user", "content": [{"text": prompt}]}],
                 inferenceConfig={"temperature": 0, "maxTokens": operation_max_tokens},
             )
+            request_id = (response.get("ResponseMetadata", {}) or {}).get("RequestId", "unknown")
+            chunks: list[str] = []
+            stop_reason, usage = "unknown", {}
+            for event in response["stream"]:
+                if "contentBlockDelta" in event:
+                    chunks.append(event["contentBlockDelta"]["delta"].get("text", ""))
+                elif "messageStop" in event:
+                    stop_reason = event["messageStop"].get("stopReason", "unknown")
+                elif "metadata" in event:
+                    usage = event["metadata"].get("usage", {}) or {}
         except Exception as exc:
             response_metadata = getattr(exc, "response", {}) or {}
             error = response_metadata.get("Error", {})
@@ -201,17 +215,15 @@ class BedrockClinicalAI(ClinicalAI):
             )
             raise
 
-        metadata = response.get("ResponseMetadata", {})
-        usage = response.get("usage", {})
+        text = "".join(chunks)
         current_app.logger.info(
             "bedrock.response_received operation=%s region=%s model_id=%s duration_ms=%d http_attempts=%d request_id=%s stop_reason=%s input_tokens=%s output_tokens=%s",
             operation, self.region, self.model_id, int((time.monotonic() - started) * 1000),
-            self._http_attempt or 1, metadata.get("RequestId", "unknown"), response.get("stopReason", "unknown"),
+            self._http_attempt or 1, request_id, stop_reason,
             usage.get("inputTokens", "unknown"), usage.get("outputTokens", "unknown"),
         )
-        if response.get("stopReason") == "max_tokens":
+        if stop_reason == "max_tokens":
             raise ValueError(f"Model output for {operation} exceeded the {operation_max_tokens} token budget")
-        text = response["output"]["message"]["content"][0]["text"]
         match = re.search(r"\{.*\}", text, re.S)
         if not match:
             raise ValueError("Model returned no JSON object")
