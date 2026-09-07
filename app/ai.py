@@ -17,7 +17,15 @@ from .clinical import (
 )
 
 
-from .drafting import DIVA_SECTIONS, GUIDELINES, REFERENCE_VERSION, REPORT_INSTRUCTIONS, validate_draft, quote_spans
+from .drafting import (
+    DIVA_SECTIONS,
+    GENERAL_DRAFT_GROUPS,
+    GUIDELINES,
+    REFERENCE_VERSION,
+    REPORT_INSTRUCTIONS,
+    validate_draft,
+    quote_spans,
+)
 
 DRAFTING_INSTRUCTIONS = REPORT_INSTRUCTIONS
 
@@ -199,7 +207,7 @@ class BedrockClinicalAI(ClinicalAI):
             usage.get("inputTokens", "unknown"), usage.get("outputTokens", "unknown"),
         )
         if response.get("stopReason") == "max_tokens":
-            raise ValueError("Model output exceeded the configured token budget")
+            raise ValueError(f"Model output for {operation} exceeded the {operation_max_tokens} token budget")
         text = response["output"]["message"]["content"][0]["text"]
         match = re.search(r"\{.*\}", text, re.S)
         if not match:
@@ -238,19 +246,35 @@ class BedrockClinicalAI(ClinicalAI):
             # No questionnaire, intake, diagnosis, or all-source criterion notes reach this call.
             diva_payload = {"cohort": case["cohort"], "verified_evidence": diva,
                             "required_sections": [s for s in REPORT_SECTIONS if s[0] in DIVA_SECTIONS]}
-            diva_result = DraftResult.model_validate(self._json("draft", system, json.dumps(diva_payload)))
+            diva_result = DraftResult.model_validate(self._json("draft_diva", system, json.dumps(diva_payload)))
         validated_diva = validate_draft(diva_result, case, diva, [], sections=DIVA_SECTIONS, finalise=False)
-        payload = {
-            "case": {k: case.get(k) for k in ("cohort", "referral_question", "assessment_dates", "final_diagnostic_conclusion")},
-            "verified_evidence": evidence, "clinician_criteria": criteria, "verified_instruments": instruments,
-            "reviewed_diva_narrative": validated_diva.model_dump()["sections"],
-            "guideline_reference_version": REFERENCE_VERSION, "guideline_references": GUIDELINES,
-            "required_sections": [s for s in REPORT_SECTIONS if s[0] not in DIVA_SECTIONS],
-        }
-        general = DraftResult.model_validate(self._json("draft", system, json.dumps(payload)))
-        combined = DraftResult(sections=[s for s in diva_result.sections if s.key in DIVA_SECTIONS] +
-                               [s for s in general.sections if s.key not in DIVA_SECTIONS])
-        return validate_draft(combined, case, evidence, instruments)
+        sections = [s for s in diva_result.sections if s.key in DIVA_SECTIONS]
+        overview: list[dict] = []
+        for label, keys in GENERAL_DRAFT_GROUPS:
+            # Only questionnaire and cognitive provenance can survive validation in the
+            # findings sections, so the other groups' evidence would only be refused.
+            group_evidence = ([e for e in evidence if e.get("assessment_type") in {"questionnaire", "cognitive"}]
+                              if label == "findings" else evidence)
+            if label == "findings" and not group_evidence and not instruments:
+                continue
+            payload = {
+                "case": {k: case.get(k) for k in ("cohort", "referral_question", "assessment_dates", "final_diagnostic_conclusion")},
+                "verified_evidence": group_evidence, "verified_instruments": instruments,
+                "required_sections": [s for s in REPORT_SECTIONS if s[0] in keys],
+            }
+            if label == "synthesis":
+                # The summary overviews what was actually drafted and accepted, and the
+                # recommendations need the clinician's decisions and the guideline set.
+                payload.update(clinician_criteria=criteria,
+                               reviewed_diva_narrative=validated_diva.model_dump()["sections"],
+                               drafted_sections_for_overview=overview,
+                               guideline_reference_version=REFERENCE_VERSION, guideline_references=GUIDELINES)
+            group = [s for s in DraftResult.model_validate(
+                self._json(f"draft_{label}", system, json.dumps(payload))).sections if s.key in keys]
+            sections.extend(group)
+            overview.extend(validate_draft(DraftResult(sections=group), case, group_evidence, instruments,
+                                           sections=set(keys), finalise=False).model_dump()["sections"])
+        return validate_draft(DraftResult(sections=sections), case, evidence, instruments)
 
 
 def get_ai() -> ClinicalAI:

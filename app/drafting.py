@@ -7,6 +7,16 @@ from collections import Counter
 from .clinical import CRITERIA_LABELS, DraftParagraph, DraftResult, DraftSection, REPORT_SECTIONS, RECOMMENDATION_GROUPS
 
 DIVA_SECTIONS = {"adhd_assessment", "inattention", "hyperactivity_impulsivity"}
+# The remaining sections are drafted in bounded groups. A single request covering every
+# non-DIVA section exhausts the model's output budget on evidence-heavy cases, and a
+# truncated response fails the whole draft rather than one part of it. Synthesis runs
+# last because the summary overviews the sections drafted before it. diagnostic_criteria
+# is absent by design: the application builds that table from clinician decisions.
+GENERAL_DRAFT_GROUPS = (
+    ("narrative", ("referral", "background", "observations")),
+    ("findings", ("instruments", "cognitive")),
+    ("synthesis", ("summary", "recommendations")),
+)
 REFERENCE_VERSION = "aadpa-reviewed-2026-09-02-v1"
 GUIDELINES = [
     {"id": "aadpa-3.1", "url": "https://adhdguideline.aadpa.com.au/treatment-and-support/multimodal-treatment-support/",

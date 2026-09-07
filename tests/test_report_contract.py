@@ -8,7 +8,7 @@ import pytest
 
 from app.ai import BedrockClinicalAI, LocalHeuristicAI
 from app.clinical import DraftResult, DraftSection, CRITERIA, REPORT_SECTIONS
-from app.drafting import DIVA_SECTIONS, validate_draft
+from app.drafting import DIVA_SECTIONS, GENERAL_DRAFT_GROUPS, validate_draft
 from app.db import get_db, init_db
 from app.worker import process_draft, _generate_files
 
@@ -101,23 +101,55 @@ def test_recommendation_groups_require_relevant_support(feedback):
     assert [p.recommendation_group for p in section(result,'recommendations').paragraphs]==['general','strengths']
 
 
+def test_general_draft_groups_cover_every_modelled_section():
+    grouped=[key for _,keys in GENERAL_DRAFT_GROUPS for key in keys]
+    modelled={key for key,_ in REPORT_SECTIONS} - DIVA_SECTIONS - {'diagnostic_criteria'}
+    assert set(grouped)==modelled
+    assert len(grouped)==len(set(grouped)), 'a section may only be drafted by one group'
+    assert GENERAL_DRAFT_GROUPS[-1][0]=='synthesis', 'the summary must be drafted last'
+
+
 def test_separate_model_call_cannot_access_questionnaires(feedback, monkeypatch):
-    calls=[]
+    calls={}
     def fake_json(self, operation, system, prompt):
-        payload=json.loads(prompt);calls.append(payload)
-        if len(calls)==1:
+        calls[operation]=json.loads(prompt)
+        if operation=='draft_diva':
             return {'sections':feedback['diva_sections']}
         return {'sections':[{'key':'inattention','heading':'Injected','paragraphs':[{'text':'QUESTIONNAIRE_ONLY_SENTINEL','evidence_ids':['questionnaire-in-mixed-source']}]}]}
     monkeypatch.setattr(BedrockClinicalAI,'_json',fake_json)
     provider=object.__new__(BedrockClinicalAI)
     result=provider.draft(feedback['case'],feedback['evidence'],feedback['criteria'],feedback['instruments'])
-    assert len(calls)==2
-    assert 'QUESTIONNAIRE_ONLY_SENTINEL' not in json.dumps(calls[0])
-    assert set(k for k,_ in calls[0]['required_sections'])==DIVA_SECTIONS
-    assert 'clinician_criteria' not in calls[0] and 'case' not in calls[0]
+    diva=calls['draft_diva']
+    assert 'QUESTIONNAIRE_ONLY_SENTINEL' not in json.dumps(diva)
+    assert set(k for k,_ in diva['required_sections'])==DIVA_SECTIONS
+    assert 'clinician_criteria' not in diva and 'case' not in diva
     assert len(section(result,'inattention').paragraphs)==9
     assert all('QUESTIONNAIRE_ONLY_SENTINEL' not in p.text for p in section(result,'inattention').paragraphs)
-    assert 'guideline_references' in calls[1]
+    assert 'guideline_references' in calls['draft_synthesis']
+
+
+def test_each_draft_call_is_bounded_to_its_own_sections(feedback, monkeypatch):
+    calls={}
+    def fake_json(self, operation, system, prompt):
+        calls[operation]=json.loads(prompt)
+        return {'sections':[]}
+    monkeypatch.setattr(BedrockClinicalAI,'_json',fake_json)
+    provider=object.__new__(BedrockClinicalAI)
+    result=provider.draft(feedback['case'],feedback['evidence'],feedback['criteria'],feedback['instruments'])
+    # No single request may be asked for every section at once; that is what exhausted
+    # the output budget and failed the whole draft.
+    for operation,payload in calls.items():
+        requested={k for k,_ in payload['required_sections']}
+        assert len(requested)<=3, f'{operation} requests too many sections at once'
+    for label,keys in GENERAL_DRAFT_GROUPS:
+        if f'draft_{label}' in calls:
+            assert {k for k,_ in calls[f'draft_{label}']['required_sections']}==set(keys)
+    # The findings call only ever receives instrument-backed provenance.
+    findings=calls.get('draft_findings')
+    if findings:
+        assert all(e['assessment_type'] in {'questionnaire','cognitive'} for e in findings['verified_evidence'])
+    # Every section still reaches the finished report even though no group produced text.
+    assert [s.key for s in result.sections]==[key for key,_ in REPORT_SECTIONS]
 
 
 def test_local_organiser_has_no_eight_item_limit_or_mixed_source_leakage(feedback):
