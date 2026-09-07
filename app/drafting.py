@@ -24,6 +24,20 @@ GENERAL_DRAFT_GROUPS = (
 # ledger made a single request try to narrate all of it. Symptom-domain evidence is routed
 # to background because a case without DIVA-typed material has nowhere else to carry it;
 # dropping it would silently lose verified clinical content.
+# Evidence that can carry the symptom narrative when a case has no DIVA-typed material.
+SYMPTOM_DOMAINS = {"inattention", "hyperactivity_impulsivity", "impairment"}
+
+
+def diva_supplied(evidence: list[dict]) -> bool:
+    """Whether the case has DIVA-typed evidence at all.
+
+    Without it the symptom sections fall back to ordinary clinical evidence rather than
+    reporting all eighteen criteria as unsupplied. The fallback never applies to a case
+    that does have DIVA material, so a real DIVA assessment keeps its strict isolation.
+    """
+    return any(e.get("assessment_type") == "diva" for e in evidence if e.get("verified", True))
+
+
 GROUP_DOMAINS = {
     "referral": {"referral", "impairment", "other"},
     "background": {"developmental", "medical", "mental_health", "family_social", "education_work",
@@ -91,6 +105,16 @@ def validate_draft(draft: DraftResult, case: dict, evidence: list[dict], instrum
     """
     evidence_by_id = {e["id"]: e for e in evidence if e.get("verified", True)}
     instruments_by_id = {i["id"]: i for i in instruments if i.get("verified", True)}
+    # A case may hold the clinical material without the provenance typing that arrived
+    # later. Where a type is entirely absent the section falls back to the evidence that
+    # does exist, rather than reporting the section as unsupplied; where it is present the
+    # original provenance rules apply unchanged.
+    diva_available = diva_supplied(list(evidence_by_id.values()))
+    typed_available = {
+        section: any(e.get("assessment_type") == assessment for e in evidence_by_id.values())
+        or any(i.get("assessment_type") == assessment for i in instruments_by_id.values())
+        for section, assessment in (("instruments", "questionnaire"), ("cognitive", "cognitive"))
+    }
     required = [s for s in REPORT_SECTIONS if sections is None or s[0] in sections]
     supplied = {}
     for section in draft.sections:
@@ -118,17 +142,30 @@ def validate_draft(draft: DraftResult, case: dict, evidence: list[dict], instrum
             linked = [evidence_by_id[i] for i in paragraph.evidence_ids]
             linked_instruments = [instruments_by_id[i] for i in paragraph.instrument_ids]
             if key in DIVA_SECTIONS:
-                if not linked or paragraph.instrument_ids or any(e.get("assessment_type") != "diva" for e in linked):
+                if not linked or paragraph.instrument_ids:
                     blocked["non-DIVA evidence"] += 1
                     continue
-                prefix = {"inattention": "A1.", "hyperactivity_impulsivity": "A2."}.get(key)
-                if prefix and (not paragraph.criterion_id or not paragraph.criterion_id.startswith(prefix) or
-                               any(paragraph.criterion_id not in e.get("criterion_ids", []) for e in linked)):
-                    blocked["incorrect criterion links"] += 1
+                if diva_available:
+                    if any(e.get("assessment_type") != "diva" for e in linked):
+                        blocked["non-DIVA evidence"] += 1
+                        continue
+                    prefix = {"inattention": "A1.", "hyperactivity_impulsivity": "A2."}.get(key)
+                    if prefix and (not paragraph.criterion_id or not paragraph.criterion_id.startswith(prefix) or
+                                   any(paragraph.criterion_id not in e.get("criterion_ids", []) for e in linked)):
+                        blocked["incorrect criterion links"] += 1
+                        continue
+                elif key != "adhd_assessment" and any(e.get("domain") not in SYMPTOM_DOMAINS for e in linked):
+                    # Without DIVA material the symptom sections still may not borrow
+                    # history, questionnaire or observation passages to stand in for symptoms.
+                    blocked["non-symptom evidence"] += 1
                     continue
             allowed_type = {"instruments": "questionnaire", "cognitive": "cognitive"}.get(key)
-            if allowed_type and any(e.get("assessment_type") != allowed_type for e in linked + linked_instruments):
-                blocked["incorrect assessment provenance"] += 1
+            if allowed_type and typed_available[key]:
+                if any(e.get("assessment_type") != allowed_type for e in linked + linked_instruments):
+                    blocked["incorrect assessment provenance"] += 1
+                    continue
+            elif allowed_type and any(e.get("domain") != "instrument" for e in linked):
+                blocked["non-instrument evidence"] += 1
                 continue
             quoted = quote_spans(paragraph.text)
             references = {normalise(q.text): q for q in paragraph.quotations}
@@ -158,7 +195,22 @@ def validate_draft(draft: DraftResult, case: dict, evidence: list[dict], instrum
                     blocked["unsupported recommendation group"] += 1
                     continue
             accepted.append(paragraph)
-        if key in {"inattention", "hyperactivity_impulsivity"}:
+        if key in {"inattention", "hyperactivity_impulsivity"} and not diva_available:
+            # Criterion-by-criterion coverage is a DIVA construct. Reporting all eighteen
+            # as unsupplied on a case that never had a DIVA interview buries the symptom
+            # evidence that does exist, so the narrative stands and the warning explains
+            # what it was drawn from.
+            if accepted:
+                warnings.append(
+                    "The symptom sections were drafted from general clinical evidence because no DIVA "
+                    "assessment was supplied. Criterion-level coverage has not been established; the "
+                    "clinician's own criterion decisions remain the record."
+                )
+            else:
+                accepted = [DraftParagraph(
+                    text="No verified symptom evidence has been supplied for this section.",
+                    kind="missing_information")]
+        elif key in {"inattention", "hyperactivity_impulsivity"}:
             prefix = "A1." if key == "inattention" else "A2."
             ordered = []
             for criterion_id, label in CRITERIA_LABELS.items():

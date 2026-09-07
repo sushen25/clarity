@@ -22,6 +22,7 @@ from .drafting import (
     DIVA_SECTIONS,
     GENERAL_DRAFT_GROUPS,
     GROUP_DOMAINS,
+    SYMPTOM_DOMAINS,
     GUIDELINES,
     REFERENCE_VERSION,
     REPORT_INSTRUCTIONS,
@@ -242,7 +243,11 @@ class BedrockClinicalAI(ClinicalAI):
         instruments = [i for i in instruments if i.get("verified", True)]
         schema = json.dumps(DraftResult.model_json_schema(), separators=(",", ":"))
         system = DRAFTING_INSTRUCTIONS + " Schema: " + schema
-        diva = [e for e in evidence if e.get("assessment_type") == "diva"]
+        # Without DIVA-typed material the symptom sections are drafted from symptom-domain
+        # evidence instead of being reported as unsupplied. A case that does have DIVA
+        # material keeps the strict isolation: only DIVA passages reach this call.
+        diva = [e for e in evidence if e.get("assessment_type") == "diva"] or [
+            e for e in evidence if e.get("domain") in SYMPTOM_DOMAINS]
         diva_result = DraftResult(sections=[])
         if diva:
             # No questionnaire, intake, diagnosis, or all-source criterion notes reach this call.
@@ -293,8 +298,11 @@ class BedrockClinicalAI(ClinicalAI):
     def _group_evidence(label: str, evidence: list[dict]) -> list[dict]:
         """Give a group only the evidence its sections can use."""
         if label == "findings":
-            # Nothing else survives the assessment-provenance check in these sections.
-            return [e for e in evidence if e.get("assessment_type") in {"questionnaire", "cognitive"}]
+            # Nothing else survives the assessment-provenance check in these sections,
+            # unless the case predates provenance typing, when instrument-domain passages
+            # are the only record of the questionnaire and cognitive results.
+            typed = [e for e in evidence if e.get("assessment_type") in {"questionnaire", "cognitive"}]
+            return typed or [e for e in evidence if e.get("domain") == "instrument"]
         if label == "synthesis":
             # The summary and recommendations range over the case; instrument passages are
             # already represented by the findings sections and the instrument summaries.

@@ -8,7 +8,7 @@ import pytest
 
 from app.ai import BedrockClinicalAI, LocalHeuristicAI
 from app.clinical import DraftResult, DraftSection, CRITERIA, REPORT_SECTIONS
-from app.drafting import DIVA_SECTIONS, GENERAL_DRAFT_GROUPS, GROUP_DOMAINS, validate_draft
+from app.drafting import DIVA_SECTIONS, GENERAL_DRAFT_GROUPS, GROUP_DOMAINS, SYMPTOM_DOMAINS, validate_draft
 from app.db import get_db, init_db
 from app.worker import process_draft, _generate_files
 
@@ -52,11 +52,49 @@ def test_diva_validation_fails_closed(feedback, change, reason):
 
 
 def test_missing_evidence_never_means_not_met(feedback):
-    feedback['evidence'] = [e for e in feedback['evidence'] if e.get('assessment_type') != 'diva']
+    # Nothing to say about symptoms: the section says so plainly and never as a finding.
+    feedback['evidence'] = [e for e in feedback['evidence']
+                            if e.get('assessment_type') != 'diva' and e['domain'] not in SYMPTOM_DOMAINS]
     result = validate(feedback, [])
-    assert len(section(result,'inattention').paragraphs) == 9
-    assert all('No verified DIVA account' in p.text for p in section(result,'inattention').paragraphs)
+    assert [p.kind for p in section(result,'inattention').paragraphs] == ['missing_information']
+    assert 'No verified symptom evidence' in section(result,'inattention').paragraphs[0].text
     assert not any('Not met' in p.text for s in result.sections for p in s.paragraphs)
+
+
+def test_criterion_coverage_is_reported_per_criterion_only_with_diva(feedback):
+    result = validate(feedback, [])
+    kept=section(result,'inattention').paragraphs
+    assert len(kept) == 9
+    assert [p.criterion_id for p in kept] == [c for c in CRITERIA if c.startswith('A1.')]
+    assert all(p.kind == 'missing_information' for p in kept)
+
+
+def test_symptom_evidence_is_used_when_no_diva_was_supplied(feedback):
+    # A case carrying symptom evidence without DIVA typing must not report all eighteen
+    # criteria as unsupplied; the narrative that does exist belongs in the report.
+    feedback['evidence'] = [e for e in feedback['evidence'] if e.get('assessment_type') != 'diva']
+    feedback['evidence'].append({'id':'symptom-1','domain':'inattention','assessment_type':'other',
+                                 'criterion_ids':[],'timeframe':'adulthood','verified':True,
+                                 'supporting_text':'She described losing track of tasks within minutes.',
+                                 'reporter':'the client','setting':'work','source_location':'block 1'})
+    drafted=[{'key':'inattention','heading':'Symptoms of Inattention','paragraphs':[
+        {'text':'R.T. described losing track of tasks within minutes of starting them.',
+         'evidence_ids':['symptom-1']}]}]
+    result = validate(feedback, drafted)
+    kept=section(result,'inattention').paragraphs
+    assert [p.kind for p in kept]==['narrative'], kept
+    assert 'losing track of tasks' in kept[0].text
+    assert any('no DIVA assessment was supplied' in w for w in result.validation_warnings), result.validation_warnings
+    assert not any('Not met' in p.text for s in result.sections for p in s.paragraphs)
+
+
+def test_symptom_sections_still_refuse_unrelated_evidence_without_diva(feedback):
+    feedback['evidence'] = [e for e in feedback['evidence'] if e.get('assessment_type') != 'diva']
+    history=next(e for e in feedback['evidence'] if e['domain'] not in SYMPTOM_DOMAINS)
+    drafted=[{'key':'inattention','heading':'Symptoms of Inattention','paragraphs':[
+        {'text':'Borrowed history standing in for a symptom account.','evidence_ids':[history['id']]}]}]
+    result = validate(feedback, drafted)
+    assert all(p.kind!='narrative' for p in section(result,'inattention').paragraphs)
 
 
 def test_instrument_only_comparison_supported_cognitive_separated(feedback):
