@@ -8,7 +8,7 @@ import pytest
 
 from app.ai import BedrockClinicalAI, LocalHeuristicAI
 from app.clinical import DraftResult, DraftSection, CRITERIA, REPORT_SECTIONS
-from app.drafting import DIVA_SECTIONS, GENERAL_DRAFT_GROUPS, validate_draft
+from app.drafting import DIVA_SECTIONS, GENERAL_DRAFT_GROUPS, GROUP_DOMAINS, validate_draft
 from app.db import get_db, init_db
 from app.worker import process_draft, _generate_files
 
@@ -150,6 +150,52 @@ def test_each_draft_call_is_bounded_to_its_own_sections(feedback, monkeypatch):
         assert all(e['assessment_type'] in {'questionnaire','cognitive'} for e in findings['verified_evidence'])
     # Every section still reaches the finished report even though no group produced text.
     assert [s.key for s in result.sections]==[key for key,_ in REPORT_SECTIONS]
+
+
+def test_each_group_only_receives_evidence_its_sections_can_use(feedback, monkeypatch):
+    calls={}
+    def fake_json(self, operation, system, prompt):
+        calls[operation]=json.loads(prompt)
+        return {'sections':[]}
+    monkeypatch.setattr(BedrockClinicalAI,'_json',fake_json)
+    provider=object.__new__(BedrockClinicalAI)
+    provider.draft(feedback['case'],feedback['evidence'],feedback['criteria'],feedback['instruments'])
+    for label,domains in GROUP_DOMAINS.items():
+        if f'draft_{label}' in calls:
+            supplied={e['domain'] for e in calls[f'draft_{label}']['verified_evidence']}
+            assert supplied<=domains, f'{label} received evidence it cannot use: {supplied-domains}'
+    # Instrument passages belong to the findings sections, never the narrative ones.
+    for label in ('referral','background','observations','synthesis'):
+        if f'draft_{label}' in calls:
+            assert all(e['domain']!='instrument' for e in calls[f'draft_{label}']['verified_evidence'])
+    # No narrative group is handed the whole ledger; that is what exhausted the output
+    # budget. Synthesis is exempt: the summary and recommendations range over the case.
+    verified=[e for e in feedback['evidence'] if e.get('verified',True)]
+    for label in GROUP_DOMAINS:
+        if f'draft_{label}' in calls:
+            assert len(calls[f'draft_{label}']['verified_evidence'])<len(verified)
+
+
+def test_one_failed_group_does_not_discard_the_whole_draft(app, feedback, monkeypatch):
+    def fake_json(self, operation, system, prompt):
+        if operation=='draft_background':
+            raise ValueError('Model output for draft_background exceeded the 16000 token budget')
+        if operation=='draft_diva':
+            return {'sections':feedback['diva_sections']}
+        payload=json.loads(prompt)
+        return {'sections':[{'key':k,'heading':h,'paragraphs':[]} for k,h in payload['required_sections']]}
+    monkeypatch.setattr(BedrockClinicalAI,'_json',fake_json)
+    provider=object.__new__(BedrockClinicalAI)
+    with app.app_context():
+        result=provider.draft(feedback['case'],feedback['evidence'],feedback['criteria'],feedback['instruments'])
+    # The rest of the report survives, and the DIVA work is not thrown away.
+    assert [s.key for s in result.sections]==[key for key,_ in REPORT_SECTIONS]
+    assert len(section(result,'inattention').paragraphs)==9
+    # The clinician is told, and approval is blocked until warnings are acknowledged.
+    assert any('Background Information' in w and 'could not be drafted' in w
+               for w in result.validation_warnings), result.validation_warnings
+    assert not section(result,'background').paragraphs or all(
+        p.kind!='narrative' for p in section(result,'background').paragraphs)
 
 
 def test_local_organiser_has_no_eight_item_limit_or_mixed_source_leakage(feedback):

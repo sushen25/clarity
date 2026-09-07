@@ -6,6 +6,7 @@ import time
 from abc import ABC, abstractmethod
 
 from flask import current_app
+from pydantic import ValidationError
 
 from .clinical import (
     DOMAIN_DEFINITIONS,
@@ -20,6 +21,7 @@ from .clinical import (
 from .drafting import (
     DIVA_SECTIONS,
     GENERAL_DRAFT_GROUPS,
+    GROUP_DOMAINS,
     GUIDELINES,
     REFERENCE_VERSION,
     REPORT_INSTRUCTIONS,
@@ -250,11 +252,9 @@ class BedrockClinicalAI(ClinicalAI):
         validated_diva = validate_draft(diva_result, case, diva, [], sections=DIVA_SECTIONS, finalise=False)
         sections = [s for s in diva_result.sections if s.key in DIVA_SECTIONS]
         overview: list[dict] = []
+        warnings: list[str] = []
         for label, keys in GENERAL_DRAFT_GROUPS:
-            # Only questionnaire and cognitive provenance can survive validation in the
-            # findings sections, so the other groups' evidence would only be refused.
-            group_evidence = ([e for e in evidence if e.get("assessment_type") in {"questionnaire", "cognitive"}]
-                              if label == "findings" else evidence)
+            group_evidence = self._group_evidence(label, evidence)
             if label == "findings" and not group_evidence and not instruments:
                 continue
             payload = {
@@ -269,12 +269,38 @@ class BedrockClinicalAI(ClinicalAI):
                                reviewed_diva_narrative=validated_diva.model_dump()["sections"],
                                drafted_sections_for_overview=overview,
                                guideline_reference_version=REFERENCE_VERSION, guideline_references=GUIDELINES)
-            group = [s for s in DraftResult.model_validate(
-                self._json(f"draft_{label}", system, json.dumps(payload))).sections if s.key in keys]
+            try:
+                raw = self._json(f"draft_{label}", system, json.dumps(payload))
+                group = [s for s in DraftResult.model_validate(raw).sections if s.key in keys]
+            except (ValueError, ValidationError) as exc:
+                # Truncated, unparseable, or schema-invalid output is deterministic: the same
+                # request would fail again. Losing one group must not discard the whole draft,
+                # so the section is left empty behind a warning the clinician must acknowledge.
+                current_app.logger.warning("draft.group_failed group=%s error_type=%s", label, type(exc).__name__)
+                warnings.append(
+                    f"The {', '.join(dict(REPORT_SECTIONS)[k] for k in keys)} section could not be drafted "
+                    f"({type(exc).__name__}); it is empty and needs clinician authorship or a new draft."
+                )
+                continue
             sections.extend(group)
             overview.extend(validate_draft(DraftResult(sections=group), case, group_evidence, instruments,
                                            sections=set(keys), finalise=False).model_dump()["sections"])
-        return validate_draft(DraftResult(sections=sections), case, evidence, instruments)
+        combined = DraftResult(sections=sections)
+        combined.validation_warnings = warnings
+        return validate_draft(combined, case, evidence, instruments)
+
+    @staticmethod
+    def _group_evidence(label: str, evidence: list[dict]) -> list[dict]:
+        """Give a group only the evidence its sections can use."""
+        if label == "findings":
+            # Nothing else survives the assessment-provenance check in these sections.
+            return [e for e in evidence if e.get("assessment_type") in {"questionnaire", "cognitive"}]
+        if label == "synthesis":
+            # The summary and recommendations range over the case; instrument passages are
+            # already represented by the findings sections and the instrument summaries.
+            return [e for e in evidence if e.get("domain") != "instrument"]
+        domains = GROUP_DOMAINS.get(label)
+        return [e for e in evidence if e.get("domain") in domains] if domains else evidence
 
 
 def get_ai() -> ClinicalAI:
