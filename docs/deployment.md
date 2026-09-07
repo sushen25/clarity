@@ -19,7 +19,7 @@ Copy `.env.example` to `.env`; `.env` is excluded from source control. Productio
 | `AWS_REGION` | `ap-southeast-2` | Bedrock client region |
 | `BEDROCK_MODEL_ID` | `au.anthropic.claude-sonnet-4-6` | Pinned Australian geographic inference profile |
 | `BEDROCK_CONNECT_TIMEOUT_SECONDS` | `10` | Maximum time to establish a Bedrock connection |
-| `BEDROCK_READ_TIMEOUT_SECONDS` | `600` | Maximum wait for one non-streaming Bedrock response |
+| `BEDROCK_READ_TIMEOUT_SECONDS` | `600` | Maximum wait between streamed response chunks; not a cap on total generation time |
 | `BEDROCK_SDK_MAX_ATTEMPTS` | `2` | Total initial and retry HTTP attempts made by the AWS SDK |
 | `BEDROCK_EXTRACTION_MAX_TOKENS` | `8000` | Maximum model output for an extraction request |
 | `BEDROCK_DRAFT_MAX_TOKENS` | `7000` | Maximum model output for a report-drafting request |
